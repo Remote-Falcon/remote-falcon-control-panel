@@ -1,0 +1,20 @@
+type Mutation {
+    signUp(firstName: String, lastName: String, showName: String!): Boolean
+    forgotPassword(email: String!): Boolean
+    verifyEmail(showToken: String!): Boolean
+    resetPassword: Boolean
+    updatePassword: Boolean
+    updateUserProfile(userProfile: UserProfileInput!): Boolean
+    requestApiAccess: Boolean
+    deleteAccount: Boolean
+    updateShow(email: String!, showName: String!): Boolean
+    updatePreferences(preferences: PreferenceInput!): Boolean
+    updatePages(pages: [PageInput]!): Boolean
+    updatePsaSequences(psaSequences: [PsaSequenceInput]!): Boolean
+    updateSequences(sequences: [SequenceInput]!): Boolean
+    updateSequenceGroups(sequenceGroups: [SequenceGroupInput]!): Boolean
+    playSequenceFromControlPanel(sequence: SequenceInput!): Boolean
+    deleteSingleRequest(position: Int!): Boolean
+    deleteAllRequests: Boolean
+    resetAllVotes: Boolean
+}
