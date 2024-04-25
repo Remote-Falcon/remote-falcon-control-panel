@@ -1,0 +1,101 @@
+name: Build and Release
+on:
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
+jobs:
+  build:
+    name: Build image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: whitesoup12/remote-falcon-control-panel:$GITHUB_SHA
+  release-test:
+    name: Release Test
+    environment: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: cschleiden/replace-tokens@v1
+        name: Replace tokens in manifest
+        with:
+          files: '$GITHUB_WORKSPACE/k8s/manifest.yml'
+        env:
+          Namespace: remote-falcon-test
+          Application: remote-falcon-control-panel
+          Env: test
+          Replicas: 1
+          Image: whitesoup12/remote-falcon-control-panel
+          Tag: $GITHUB_SHA
+          Requests.Memory: 500Mi
+          Requests.CPU: 250m
+          Limits.Memory: 750Mi
+          Limits.CPU: 500m
+          DockerHubSecret: docker-hub
+          Host: remotefalcon.dev
+          
+      - name: Install doctl 
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Save DigitalOcean kubeconfig
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 4fee5fb4-939b-4d7a-8eb0-1b31115a74dc
+
+      - name: Kubectl apply
+        run: kubectl apply -f $GITHUB_WORKSPACE/k8s/manifest.yml
+  release-prod:
+    name: Release Prod
+    environment: prod
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: cschleiden/replace-tokens@v1
+        name: Replace tokens in manifest
+        with:
+          files: '$GITHUB_WORKSPACE/k8s/manifest.yml'
+        env:
+          Namespace: remote-falcon
+          Application: remote-falcon-control-panel
+          Env: prod
+          Replicas: 2
+          Image: whitesoup12/remote-falcon-control-panel
+          Tag: $GITHUB_SHA
+          Requests.Memory: 1000Mi
+          Requests.CPU: 500m
+          Limits.Memory: 1250Mi
+          Limits.CPU: 750m
+          DockerHubSecret: docker-hub
+          Host: remotefalcon.com
+          
+      - name: Install doctl 
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Save DigitalOcean kubeconfig
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 4fee5fb4-939b-4d7a-8eb0-1b31115a74dc
+
+      - name: Kubectl apply
+        run: kubectl apply -f $GITHUB_WORKSPACE/k8s/manifest.yml
