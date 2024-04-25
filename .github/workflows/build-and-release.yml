@@ -58,8 +58,7 @@ jobs:
           Application: remote-falcon-control-panel
           Env: test
           Replicas: 1
-          Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          Tag: ${{ needs.build.outputs.meta-tag }}
+          Image: ${{ needs.build.outputs.meta-tag }}
           Requests.Memory: 500Mi
           Requests.CPU: 250m
           Limits.Memory: 750Mi
@@ -94,8 +93,7 @@ jobs:
   #         Application: remote-falcon-control-panel
   #         Env: production
   #         Replicas: 2
-  #         Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-  #         Tag: ${{ needs.build.outputs.meta-tag }}
+  #         Image: ${{ needs.build.outputs.meta-tag }}
   #         Requests.Memory: 1000Mi
   #         Requests.CPU: 500m
   #         Limits.Memory: 1250Mi
