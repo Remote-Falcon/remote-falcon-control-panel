@@ -1,11 +1,17 @@
 name: Release Test
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       image-tag:
-        required: true
+        description: 'Image tag to release'
+        required: false
+        default: ${{ github.head_ref }}.${{ github.sha }}
         type: string
+  workflow_run:
+    workflows: ["Build and Push"]
+    types:
+      - completed
 jobs:
   build:
     name: Release Test
