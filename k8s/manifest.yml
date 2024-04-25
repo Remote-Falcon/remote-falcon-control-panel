@@ -32,7 +32,7 @@ spec:
           name: apmsocketpath
       containers:
       - name: #{Application}#
-        image: #{Image}#:#{Tag}#
+        image: #{Image}#
         resources:
           requests:
             memory: #{Requests.Memory}#
