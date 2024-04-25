@@ -13,6 +13,8 @@ jobs:
   build:
     name: Build image
     runs-on: ubuntu-latest
+    outputs:
+      meta-tag: ${{ steps.meta.outputs.tags }}
     permissions:
       contents: read
       packages: write
@@ -57,7 +59,7 @@ jobs:
           Env: test
           Replicas: 1
           Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          Tag: ${{ steps.meta.outputs.tags }}
+          Tag: ${{ needs.build.outputs.meta-tag }}
           Requests.Memory: 500Mi
           Requests.CPU: 250m
           Limits.Memory: 750Mi
@@ -93,7 +95,7 @@ jobs:
   #         Env: production
   #         Replicas: 2
   #         Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-  #         Tag: ${{ github.sha }}
+  #         Tag: ${{ needs.build.outputs.meta-tag }}
   #         Requests.Memory: 1000Mi
   #         Requests.CPU: 500m
   #         Limits.Memory: 1250Mi
