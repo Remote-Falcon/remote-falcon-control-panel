@@ -5,13 +5,15 @@ on:
     inputs:
       image-tag:
         description: 'Image tag to release'
-        default: $IMAGE_TAG
+        default: ${{ github.sha }}
         required: false
         type: string
   workflow_run:
     workflows: ["Build and Push"]
     types:
       - completed
+    branches-ignore:
+      - '*'
 jobs:
   build:
     name: Release Test
