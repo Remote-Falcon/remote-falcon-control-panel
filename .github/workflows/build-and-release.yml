@@ -26,10 +26,11 @@ jobs:
         with:
           context: .
           push: true
-          tags: whitesoup12/remote-falcon-control-panel:$GITHUB_SHA
+          tags: whitesoup12/remote-falcon-control-panel:${{ github.sha }}
   release-test:
     name: Release Test
     environment: test
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -45,7 +46,7 @@ jobs:
           Env: test
           Replicas: 1
           Image: whitesoup12/remote-falcon-control-panel
-          Tag: $GITHUB_SHA
+          Tag: ${{ github.sha }}
           Requests.Memory: 500Mi
           Requests.CPU: 250m
           Limits.Memory: 750Mi
@@ -66,6 +67,7 @@ jobs:
   release-prod:
     name: Release Prod
     environment: prod
+    needs: [build, release-test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -81,7 +83,7 @@ jobs:
           Env: prod
           Replicas: 2
           Image: whitesoup12/remote-falcon-control-panel
-          Tag: $GITHUB_SHA
+          Tag: ${{ github.sha }}
           Requests.Memory: 1000Mi
           Requests.CPU: 500m
           Limits.Memory: 1250Mi
