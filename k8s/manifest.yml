@@ -58,16 +58,11 @@ spec:
             secretKeyRef:
               name: remote-falcon-control-panel
               key: mysql-pass
-        - name: spring.data.mongodb.username
+        - name: spring.data.mongodb.uri
           valueFrom:
             secretKeyRef:
               name: remote-falcon-control-panel
-              key: mongo-user
-        - name: spring.data.mongodb.password
-          valueFrom:
-            secretKeyRef:
-              name: remote-falcon-control-panel
-              key: mongo-pass
+              key: mongo-uri
         - name: github.pat
           valueFrom:
             secretKeyRef:
