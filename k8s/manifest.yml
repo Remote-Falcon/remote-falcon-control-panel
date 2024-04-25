@@ -112,7 +112,7 @@ spec:
           failureThreshold: 60
           initialDelaySeconds: 0
       imagePullSecrets:
-        - name: ghrc
+        - name: remote-falcon-ghcr
 ---
 apiVersion: v1
 kind: Service
