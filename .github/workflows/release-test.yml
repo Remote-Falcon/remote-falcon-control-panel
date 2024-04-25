@@ -2,6 +2,12 @@ name: Release Test
 
 on:
   workflow_dispatch:
+    inputs:
+      image-tag:
+        description: 'Image tag to release'
+        required: false
+        default: ${{ github.head_ref }}.${{ github.sha }}
+        type: string
   workflow_run:
     workflows: ["Build and Push"]
     types:
@@ -24,7 +30,7 @@ jobs:
           Env: test
           Replicas: 1
           Image: whitesoup12/remote-falcon-control-panel
-          Tag: $(git rev-parse --short HEAD)
+          Tag: ${{ inputs.image-tag }}
           Requests.Memory: 500Mi
           Requests.CPU: 250m
           Limits.Memory: 750Mi
