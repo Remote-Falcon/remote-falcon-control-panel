@@ -112,7 +112,7 @@ spec:
           failureThreshold: 60
           initialDelaySeconds: 0
       imagePullSecrets:
-        - name: #{DockerHubSecret}#
+        - name: ghrc
 ---
 apiVersion: v1
 kind: Service
