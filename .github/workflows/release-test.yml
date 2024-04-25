@@ -17,14 +17,14 @@ jobs:
       - uses: cschleiden/replace-tokens@v1
         name: Replace tokens in manifest
         with:
-          files: './k8s/manifest.yml'
+          files: '$GITHUB_WORKSPACE/k8s/manifest.yml'
         env:
           Namespace: remote-falcon-test
           Application: remote-falcon-control-panel
           Env: test
           Replicas: 1
           Image: whitesoup12/remote-falcon-control-panel
-          Tag: ${{ github.sha }}
+          Tag: $(git rev-parse --short HEAD)
           Requests.Memory: 500Mi
           Requests.CPU: 250m
           Limits.Memory: 750Mi
@@ -46,4 +46,4 @@ jobs:
           time: '30s'
 
       - name: Kubectl apply
-        run: kubectl apply -f ./k8s/manifest.yml
+        run: kubectl apply -f $GITHUB_WORKSPACE/k8s/manifest.yml
