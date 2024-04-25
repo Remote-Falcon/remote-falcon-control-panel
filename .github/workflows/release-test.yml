@@ -5,8 +5,8 @@ on:
     inputs:
       image-tag:
         description: 'Image tag to release'
+        default: $IMAGE_TAG
         required: false
-        default: ${{ github.head_ref }}.${{ github.sha }}
         type: string
   workflow_run:
     workflows: ["Build and Push"]
@@ -16,6 +16,7 @@ jobs:
   build:
     name: Release Test
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v3
         with:
