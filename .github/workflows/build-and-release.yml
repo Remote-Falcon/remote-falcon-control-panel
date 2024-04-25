@@ -53,7 +53,7 @@ jobs:
           Application: remote-falcon-control-panel
           Env: test
           Replicas: 1
-          Image: whitesoup12/remote-falcon-control-panel
+          Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           Tag: ${{ github.sha }}
           Requests.Memory: 500Mi
           Requests.CPU: 250m
@@ -87,9 +87,9 @@ jobs:
         env:
           Namespace: remote-falcon
           Application: remote-falcon-control-panel
-          Env: prod
+          Env: production
           Replicas: 2
-          Image: whitesoup12/remote-falcon-control-panel
+          Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           Tag: ${{ github.sha }}
           Requests.Memory: 1000Mi
           Requests.CPU: 500m
