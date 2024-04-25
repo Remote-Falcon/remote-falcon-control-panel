@@ -17,7 +17,7 @@ jobs:
       - uses: cschleiden/replace-tokens@v1
         name: Replace tokens in manifest
         with:
-          files: '${{ github.workspace }}/k8s/manifest.yml'
+          files: './k8s/manifest.yml'
         env:
           Namespace: remote-falcon-test
           Application: remote-falcon-control-panel
@@ -46,4 +46,4 @@ jobs:
           time: '30s'
 
       - name: Kubectl apply
-        run: kubectl apply -f ${{ github.workspace }}/k8s/manifest.yml
+        run: kubectl apply -f ./k8s/manifest.yml
