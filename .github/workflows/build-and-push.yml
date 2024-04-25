@@ -26,4 +26,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: whitesoup12/remote-falcon-control-panel:$(git rev-parse --short HEAD)
+          tags: whitesoup12/remote-falcon-control-panel:${{ github.head_ref }}.${{ github.sha }}
