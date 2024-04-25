@@ -39,7 +39,7 @@ jobs:
       - uses: cschleiden/replace-tokens@v1
         name: Replace tokens in manifest
         with:
-          files: '$GITHUB_WORKSPACE/k8s/manifest.yml'
+          files: './k8s/manifest.yml'
         env:
           Namespace: remote-falcon-test
           Application: remote-falcon-control-panel
@@ -63,7 +63,7 @@ jobs:
         run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 4fee5fb4-939b-4d7a-8eb0-1b31115a74dc
 
       - name: Kubectl apply
-        run: kubectl apply -f $GITHUB_WORKSPACE/k8s/manifest.yml
+        run: kubectl apply -f ./k8s/manifest.yml
   release-prod:
     name: Release Prod
     environment: prod
@@ -76,7 +76,7 @@ jobs:
       - uses: cschleiden/replace-tokens@v1
         name: Replace tokens in manifest
         with:
-          files: '$GITHUB_WORKSPACE/k8s/manifest.yml'
+          files: './k8s/manifest.yml'
         env:
           Namespace: remote-falcon
           Application: remote-falcon-control-panel
@@ -100,4 +100,4 @@ jobs:
         run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 4fee5fb4-939b-4d7a-8eb0-1b31115a74dc
 
       - name: Kubectl apply
-        run: kubectl apply -f $GITHUB_WORKSPACE/k8s/manifest.yml
+        run: kubectl apply -f ./k8s/manifest.yml
