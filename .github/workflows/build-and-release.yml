@@ -36,7 +36,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
   release-test:
     name: Release Test
@@ -57,7 +57,7 @@ jobs:
           Env: test
           Replicas: 1
           Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          Tag: ${{ github.sha }}
+          Tag: ${{ steps.meta.outputs.tags }}
           Requests.Memory: 500Mi
           Requests.CPU: 250m
           Limits.Memory: 750Mi
