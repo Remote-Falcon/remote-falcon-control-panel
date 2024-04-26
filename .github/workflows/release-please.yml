@@ -28,12 +28,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: simple
           target-branch: ${{ github.ref_name }}
-      - name: Echo Release Please tag_name
-        run: |
-          echo ${{ steps.release.outputs.tag_name }}
-      - name: Echo Release Please releases_created
-        run: |
-          echo ${{ steps.release.outputs.releases_created }}
   build-and-push:
     name: Build image
     runs-on: ubuntu-latest
@@ -56,18 +50,12 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
             latest=false
-      - name: Echo Release Please tag_name
-        run: |
-          echo ${{ needs.release-please.outputs.tag_name }}
-      - name: Echo Meta tags
-        run: |
-          echo ${{ steps.meta.outputs.tags }}
       - name: Build and push image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ needs.release-please.outputs.tag_name }}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
   release-test:
     name: Release Test
