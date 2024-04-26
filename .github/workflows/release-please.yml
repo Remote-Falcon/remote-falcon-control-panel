@@ -53,10 +53,16 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
             latest=false
-      - name: Build and push image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ needs.release_please.outputs.tag_name }}
-          labels: ${{ steps.meta.outputs.labels }}
+      - name: Check tag-name output
+        run: |
+          echo ${{ needs.release_please.outputs.tag_name }}
+      - name: Check meta tags output
+        run: |
+          echo ${{ steps.meta.outputs.tags }}
+#      - name: Build and push image
+#        uses: docker/build-push-action@v5
+#        with:
+#          context: .
+#          push: true
+#          tags: ${{ needs.release_please.outputs.tag_name }}
+#          labels: ${{ steps.meta.outputs.labels }}
