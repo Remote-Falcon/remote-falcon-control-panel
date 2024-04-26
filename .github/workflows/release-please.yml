@@ -25,6 +25,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: maven
+          target-branch: ${{ github.ref_name }}
   build-and-push:
     name: Build image
     runs-on: ubuntu-latest
