@@ -31,7 +31,7 @@ jobs:
     name: Build image
     runs-on: ubuntu-latest
     needs: release-please
-    # if: ${{ needs.release_please.outputs.releases_created == 'true' }}
+    if: ${{ needs.release_please.outputs.releases_created == 'true' }}
     permissions:
       contents: read
       packages: write
@@ -58,10 +58,10 @@ jobs:
       - name: Check meta tags output
         run: |
           echo ${{ steps.meta.outputs.tags }}
-#      - name: Build and push image
-#        uses: docker/build-push-action@v5
-#        with:
-#          context: .
-#          push: true
-#          tags: ${{ needs.release_please.outputs.tag_name }}
-#          labels: ${{ steps.meta.outputs.labels }}
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ needs.release_please.outputs.tag_name }}
+          labels: ${{ steps.meta.outputs.labels }}
