@@ -22,6 +22,7 @@ jobs:
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       - uses: google-github-actions/release-please-action@v4
+        id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: maven
@@ -30,9 +31,7 @@ jobs:
     name: Build image
     runs-on: ubuntu-latest
     needs: release-please
-    # if: ${{ needs.release_please.outputs.releases_created == 'true' }}
-    outputs:
-      tag-name: ${{ needs.release_please.outputs.tag_name }}
+    if: ${{ needs.release_please.outputs.releases_created == 'true' }}
     permissions:
       contents: read
       packages: write
@@ -53,6 +52,12 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
             latest=false
+      - name: Check tag-name output
+        run: |
+          echo ${{ needs.release_please.outputs.tag_name }}
+      - name: Check meta tags output
+        run: |
+          echo ${{ steps.meta.outputs.tags }}
       - name: Build and push image
         uses: docker/build-push-action@v5
         with:
@@ -60,3 +65,74 @@ jobs:
           push: true
           tags: ${{ needs.release_please.outputs.tag_name }}
           labels: ${{ steps.meta.outputs.labels }}
+  release-test:
+    name: Release Test
+    environment: test
+    needs: [release-please, build-and-push]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: cschleiden/replace-tokens@v1
+        name: Replace tokens in manifest
+        with:
+          files: './k8s/manifest.yml'
+        env:
+          Namespace: remote-falcon-test
+          Application: remote-falcon-control-panel
+          Env: test
+          Replicas: 1
+          Image: ${{ needs.build.outputs.meta-tag }}
+          Requests.Memory: 500Mi
+          Requests.CPU: 250m
+          Limits.Memory: 750Mi
+          Limits.CPU: 500m
+          Host: remotefalcon.dev
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Save DigitalOcean kubeconfig
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 4fee5fb4-939b-4d7a-8eb0-1b31115a74dc
+
+      - name: Kubectl apply
+        run: kubectl apply -f ./k8s/manifest.yml
+  release-production:
+    name: Release Production
+    environment: production
+    if: ${{ github.ref == 'refs/heads/main' }}
+    needs: [release-test, release-please, build-and-push]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: cschleiden/replace-tokens@v1
+        name: Replace tokens in manifest
+        with:
+          files: './k8s/manifest.yml'
+        env:
+          Namespace: remote-falcon
+          Application: remote-falcon-control-panel
+          Env: production
+          Replicas: 2
+          Image: ${{ needs.build.outputs.meta-tag }}
+          Requests.Memory: 1000Mi
+          Requests.CPU: 500m
+          Limits.Memory: 1250Mi
+          Limits.CPU: 750m
+          Host: remotefalcon.com
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Save DigitalOcean kubeconfig
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 4fee5fb4-939b-4d7a-8eb0-1b31115a74dc
+
+      - name: Kubectl apply
+        run: kubectl apply -f ./k8s/manifest.yml
