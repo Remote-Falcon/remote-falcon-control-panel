@@ -27,6 +27,12 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: maven
           target-branch: ${{ github.ref_name }}
+      - name: Echo Release Please tag_name
+        run: |
+          echo ${{ steps.release.outputs.tag_name }}
+      - name: Echo Release Please releases_created
+        run: |
+          echo ${{ steps.release.outputs.releases_created }}
   build-and-push:
     name: Build image
     runs-on: ubuntu-latest
@@ -52,10 +58,10 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
             latest=false
-      - name: Check tag-name output
+      - name: Echo Release Please tag_name
         run: |
           echo ${{ needs.release_please.outputs.tag_name }}
-      - name: Check meta tags output
+      - name: Echo Meta tags
         run: |
           echo ${{ steps.meta.outputs.tags }}
       - name: Build and push image
