@@ -33,6 +33,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: release-please
     if: ${{ needs.release-please.outputs.releases_created == 'true' }}
+    outputs:
+      meta-tag: ${{ steps.meta.outputs.tags }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -76,7 +78,7 @@ jobs:
           Application: remote-falcon-control-panel
           Env: test
           Replicas: 1
-          Image: ${{ needs.build.outputs.meta-tag }}
+          Image: ${{ needs.build-and-push.outputs.meta-tag }}
           Requests.Memory: 500Mi
           Requests.CPU: 250m
           Limits.Memory: 750Mi
@@ -112,7 +114,7 @@ jobs:
           Application: remote-falcon-control-panel
           Env: production
           Replicas: 2
-          Image: ${{ needs.build.outputs.meta-tag }}
+          Image: ${{ needs.build-and-push.outputs.meta-tag }}
           Requests.Memory: 1000Mi
           Requests.CPU: 500m
           Limits.Memory: 1250Mi
