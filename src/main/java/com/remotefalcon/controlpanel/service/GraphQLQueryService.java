@@ -72,7 +72,9 @@ public class GraphQLQueryService {
             show.get().setLastLoginDate(LocalDateTime.now());
             this.showRepository.save(show.get());
             List<Sequence> sequences = show.get().getSequences();
-            sequences.sort(Comparator.comparing(Sequence::getOrder));
+            sequences.sort(Comparator.comparing(Sequence::getActive)
+                            .reversed()
+                    .thenComparing(Sequence::getOrder));
             show.get().setSequences(sequences);
             return show.get();
         }
