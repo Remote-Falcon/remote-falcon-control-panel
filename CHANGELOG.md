@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.2](https://github.com/Remote-Falcon/remote-falcon-control-panel/compare/v1.0.1...v1.0.2) (2024-05-04)
+
+
+### Bug Fixes
+
+* Update release-please.yml ([2daf56e](https://github.com/Remote-Falcon/remote-falcon-control-panel/commit/2daf56e4ad0e51a9a2f3608f5923a8310b09d777))
+* Update version.txt ([ad0892a](https://github.com/Remote-Falcon/remote-falcon-control-panel/commit/ad0892a9d13ae758d02e26aa9a86a60b19a5b705))
+* Update version.txt ([5069929](https://github.com/Remote-Falcon/remote-falcon-control-panel/commit/50699298a61ef3669332841268681cd054c0f995))
+
 ## [1.0.1](https://github.com/Remote-Falcon/remote-falcon-control-panel/compare/v1.0.0...v1.0.1) (2024-05-04)
 
 
