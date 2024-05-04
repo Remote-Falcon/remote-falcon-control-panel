@@ -255,6 +255,9 @@ public class GraphQLMutationService {
     public Boolean updatePreferences(Preference preferences) {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {
+            if(preferences.getViewerControlEnabled() != show.get().getPreferences().getViewerControlEnabled()) {
+                preferences.setSequencesPlayed(0);
+            }
             show.get().setPreferences(preferences);
             this.showRepository.save(show.get());
             return true;
@@ -337,7 +340,8 @@ public class GraphQLMutationService {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {
             show.get().setRequests(new ArrayList<>());
-            show.get().setPlayingNext("");
+            show.get().setSequences(show.get().getSequences().stream()
+                    .peek(sequence -> sequence.setVisibilityCount(0)).toList());
             this.showRepository.save(show.get());
             return true;
         }
@@ -348,6 +352,8 @@ public class GraphQLMutationService {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {
             show.get().setVotes(new ArrayList<>());
+            show.get().setSequences(show.get().getSequences().stream()
+                    .peek(sequence -> sequence.setVisibilityCount(0)).toList());
             this.showRepository.save(show.get());
             return true;
         }
