@@ -1,0 +1,118 @@
+name: Dispatch Build and Release
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    name: Build image
+    runs-on: ubuntu-latest
+    outputs:
+      meta-tag: ${{ steps.meta.outputs.tags }}
+    steps:
+      - id: repository_string
+        uses: ASzc/change-string-case-action@v6
+        with:
+          string: ${{ github.repository }}
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ steps.repository_string.outputs.lowercase }}:${{ github.sha }}
+  release-test:
+    name: Release Test
+    environment: test
+    needs: [build-and-push]
+    runs-on: ubuntu-latest
+    steps:
+      - id: repository_string
+        uses: ASzc/change-string-case-action@v6
+        with:
+          string: ${{ github.repository }}
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: cschleiden/replace-tokens@v1
+        name: Replace tokens in manifest
+        with:
+          files: './k8s/manifest.yml'
+        env:
+          Namespace: remote-falcon-test
+          Application: remote-falcon-control-panel
+          Env: test
+          Replicas: 1
+          Image: ${{ env.REGISTRY }}/${{ steps.repository_string.outputs.lowercase }}:${{ github.sha }}
+          Requests.Memory: 500Mi
+          Requests.CPU: 250m
+          Limits.Memory: 750Mi
+          Limits.CPU: 500m
+          Host: remotefalcon.dev
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Save DigitalOcean kubeconfig
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 4fee5fb4-939b-4d7a-8eb0-1b31115a74dc
+
+      - name: Kubectl apply
+        run: kubectl apply -f ./k8s/manifest.yml
+  release-production:
+    name: Release Production
+    environment: production
+    needs: [build-and-push, release-test]
+    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/main' }}
+    steps:
+      - id: repository_string
+        uses: ASzc/change-string-case-action@v6
+        with:
+          string: ${{ github.repository }}
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: cschleiden/replace-tokens@v1
+        name: Replace tokens in manifest
+        with:
+          files: './k8s/manifest.yml'
+        env:
+          Namespace: remote-falcon
+          Application: remote-falcon-control-panel
+          Env: production
+          Replicas: 2
+          Image: ${{ env.REGISTRY }}/${{ steps.repository_string.outputs.lowercase }}:${{ github.sha }}
+          Requests.Memory: 1000Mi
+          Requests.CPU: 500m
+          Limits.Memory: 1250Mi
+          Limits.CPU: 750m
+          Host: remotefalcon.com
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Save DigitalOcean kubeconfig
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 4fee5fb4-939b-4d7a-8eb0-1b31115a74dc
+
+      - name: Kubectl apply
+        run: kubectl apply -f ./k8s/manifest.yml
