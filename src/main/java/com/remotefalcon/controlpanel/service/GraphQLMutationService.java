@@ -354,6 +354,8 @@ public class GraphQLMutationService {
             show.get().setVotes(new ArrayList<>());
             show.get().setSequences(show.get().getSequences().stream()
                     .peek(sequence -> sequence.setVisibilityCount(0)).toList());
+            show.get().setSequenceGroups(show.get().getSequenceGroups().stream()
+                    .peek(sequenceGroup -> sequenceGroup.setVisibilityCount(0)).toList());
             this.showRepository.save(show.get());
             return true;
         }
