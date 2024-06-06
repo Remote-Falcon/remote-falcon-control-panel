@@ -1,5 +1,6 @@
 name: Build and Release
 on:
+  workflow_dispatch:
   push:
     branches:
       - 'main'
@@ -80,7 +81,7 @@ jobs:
         run: kubectl apply -f ./k8s/manifest.yml
   release-production:
     name: Release Production
-    environment: production
+    environment: prod
     needs: [build-and-push, release-test]
     runs-on: ubuntu-latest
     if: ${{ github.ref == 'refs/heads/main' }}
@@ -99,7 +100,7 @@ jobs:
         env:
           Namespace: remote-falcon
           Application: remote-falcon-control-panel
-          Env: production
+          Env: prod
           Replicas: 2
           Image: ${{ env.REGISTRY }}/${{ steps.repository_string.outputs.lowercase }}:${{ github.sha }}
           Requests.Memory: 1000Mi
