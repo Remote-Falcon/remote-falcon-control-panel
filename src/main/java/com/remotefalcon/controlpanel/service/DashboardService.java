@@ -5,7 +5,7 @@ import com.remotefalcon.library.models.ActiveViewer;
 import com.remotefalcon.library.models.Stat;
 import com.remotefalcon.controlpanel.dto.TokenDTO;
 import com.remotefalcon.library.enums.StatusResponse;
-import com.remotefalcon.controlpanel.repository.mongo.ShowRepository;
+import com.remotefalcon.controlpanel.repository.ShowRepository;
 import com.remotefalcon.controlpanel.response.dashboard.DashboardLiveStatsResponse;
 import com.remotefalcon.controlpanel.response.dashboard.DashboardStatsResponse;
 import com.remotefalcon.controlpanel.util.AuthUtil;
