@@ -1,7 +1,7 @@
 package com.remotefalcon.controlpanel.controller;
 
 import com.remotefalcon.controlpanel.aop.RequiresAccess;
-import com.remotefalcon.controlpanel.request.dashboard.DownloadStatsToExcelRequest;
+import com.remotefalcon.controlpanel.request.DownloadStatsToExcelRequest;
 import com.remotefalcon.controlpanel.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;

@@ -4,7 +4,7 @@ import com.remotefalcon.library.documents.Show;
 import com.remotefalcon.library.models.Sequence;
 import com.remotefalcon.library.enums.StatusResponse;
 import com.remotefalcon.library.enums.ViewerControlMode;
-import com.remotefalcon.controlpanel.repository.mongo.ShowRepository;
+import com.remotefalcon.controlpanel.repository.ShowRepository;
 import com.remotefalcon.controlpanel.util.AuthUtil;
 import com.remotefalcon.controlpanel.util.ClientUtil;
 import jakarta.servlet.http.HttpServletRequest;

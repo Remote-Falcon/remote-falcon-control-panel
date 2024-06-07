@@ -1,4 +1,4 @@
-package com.remotefalcon.controlpanel.repository.mongo;
+package com.remotefalcon.controlpanel.repository;
 
 import com.remotefalcon.library.documents.Show;
 import jakarta.transaction.Transactional;

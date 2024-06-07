@@ -28,40 +28,4 @@ public class AccessAspect {
     }
     throw new RuntimeException(StatusResponse.INVALID_JWT.name());
   }
-
-  @Around("@annotation(RequiresViewerAccess)")
-  public Object isViewerJwtValid(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
-    HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-    if(this.authUtil.isViewerJwtValid(request)) {
-      return proceedingJoinPoint.proceed();
-    }
-    return ResponseEntity.status(401).build();
-  }
-
-  @Around("@annotation(RequiresPluginAccess)")
-  public Object isPluginJwtValid(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
-    String remoteToken = this.authUtil.getRemoteTokenFromHeader();
-    if(!StringUtils.isEmpty(remoteToken)) {
-      return proceedingJoinPoint.proceed();
-    }
-    return ResponseEntity.status(401).build();
-  }
-
-  @Around("@annotation(RequiresApiAccess)")
-  public Object isApiJwtValid(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
-    HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-    if(this.authUtil.isApiJwtValid(request)) {
-      return proceedingJoinPoint.proceed();
-    }
-    return ResponseEntity.status(401).build();
-  }
-
-  @Around("@annotation(RequiresAdminAccess)")
-  public Object isAdminJwtValid(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
-    HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-    if(this.authUtil.isAdminJwtValid(request)) {
-      return proceedingJoinPoint.proceed();
-    }
-    return ResponseEntity.status(401).build();
-  }
 }
