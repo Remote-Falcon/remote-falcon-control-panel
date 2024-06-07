@@ -68,18 +68,21 @@ public class DashboardService {
     ZonedDateTime startDateAtZone = ZonedDateTime.ofInstant(Instant.ofEpochMilli(startDate), ZoneId.of(timezone));
     ZonedDateTime endDateAtZone = ZonedDateTime.ofInstant(Instant.ofEpochMilli(endDate), ZoneId.of(timezone));
 
-    List<ActiveViewer> filteredActiveViewers = show.get().getActiveViewers().stream()
-            .filter(activeViewer -> activeViewer.getVisitDateTime().isAfter(LocalDateTime.now().minusMinutes(1)))
-            .toList();
+    List<ActiveViewer> filteredActiveViewers = new ArrayList<>();
+    if(show.get().getActiveViewers() != null) {
+      filteredActiveViewers = show.get().getActiveViewers().stream()
+              .filter(activeViewer -> activeViewer.getVisitDateTime().isAfter(LocalDateTime.now().minusMinutes(1)))
+              .toList();
+    }
     show.get().setActiveViewers(filteredActiveViewers);
     this.showRepository.save(show.get());
 
     return DashboardLiveStatsResponse.builder()
             .activeViewers(filteredActiveViewers.size())
             .totalViewers(this.buildTotalViewersLiveStat(startDateAtZone, endDateAtZone, timezone, show.get(), false))
-            .currentRequests(show.get().getRequests().size())
+            .currentRequests(show.get().getRequests() != null ? show.get().getRequests().size() : 0)
             .totalRequests(this.buildTotalRequestsLiveStat(startDateAtZone, endDateAtZone, timezone, show.get(), false))
-            .currentVotes(show.get().getVotes().stream().mapToInt(Vote::getVotes).sum())
+            .currentVotes(show.get().getVotes() != null ? show.get().getVotes().stream().mapToInt(Vote::getVotes).sum() : 0)
             .totalVotes(this.buildTotalVotesLiveStat(startDateAtZone, endDateAtZone, timezone, show.get(), false))
             .build();
   }
