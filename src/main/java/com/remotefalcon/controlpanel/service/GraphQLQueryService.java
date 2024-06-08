@@ -1,6 +1,7 @@
 package com.remotefalcon.controlpanel.service;
 
 import com.remotefalcon.library.documents.Show;
+import com.remotefalcon.library.models.Request;
 import com.remotefalcon.library.models.Sequence;
 import com.remotefalcon.library.enums.StatusResponse;
 import com.remotefalcon.library.enums.ViewerControlMode;
@@ -73,11 +74,17 @@ public class GraphQLQueryService {
         if(show.isPresent()) {
             show.get().setLastLoginDate(LocalDateTime.now());
             this.showRepository.save(show.get());
+
             List<Sequence> sequences = show.get().getSequences();
             sequences.sort(Comparator.comparing(Sequence::getActive)
                             .reversed()
                     .thenComparing(Sequence::getOrder));
             show.get().setSequences(sequences);
+
+            List<Request> jukeboxRequests = show.get().getRequests();
+            jukeboxRequests.sort(Comparator.comparing(Request::getPosition));
+            show.get().setRequests(jukeboxRequests);
+
             return show.get();
         }
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());

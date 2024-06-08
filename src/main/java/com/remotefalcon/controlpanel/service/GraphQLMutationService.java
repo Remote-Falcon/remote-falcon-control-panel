@@ -308,6 +308,31 @@ public class GraphQLMutationService {
     public Boolean playSequenceFromControlPanel(Sequence sequence) {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {
+            if(show.get().getPreferences().getViewerControlMode() == ViewerControlMode.JUKEBOX) {
+                boolean hasOwnerRequest = show.get().getRequests().stream()
+                        .anyMatch(Request::getOwnerRequested);
+                if(hasOwnerRequest) {
+                    throw new RuntimeException(StatusResponse.OWNER_REQUESTED.name());
+                }
+                show.get().getRequests().add(Request.builder()
+                        .sequence(sequence)
+                        .ownerRequested(true)
+                        .position(0)
+                        .build());
+            }else {
+                boolean hasOwnerVoted = show.get().getVotes().stream()
+                        .anyMatch(Vote::getOwnerVoted);
+                if(hasOwnerVoted) {
+                    throw new RuntimeException(StatusResponse.OWNER_REQUESTED.name());
+                }
+                show.get().getVotes().add(Vote.builder()
+                        .sequence(sequence)
+                        .ownerVoted(true)
+                        .lastVoteTime(LocalDateTime.now())
+                        .votes(1000)
+                        .build());
+            }
+            this.showRepository.save(show.get());
             return true;
         }
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
