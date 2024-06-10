@@ -20,7 +20,7 @@ public class ControlPanelService {
 
   public ResponseEntity<List<GitHubIssueResponse>> gitHubIssues() {
     List<GitHubIssueResponse> ghIssue = this.gitHubWebClient.get()
-            .uri("repos/whitesoup12/remote-falcon/issues")
+            .uri("repos/Remote-Falcon/remote-falcon-issue-tracker/issues")
             .retrieve()
             .bodyToMono(new ParameterizedTypeReference<List<GitHubIssueResponse>>() {})
             .block();
