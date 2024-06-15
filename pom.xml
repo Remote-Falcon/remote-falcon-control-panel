@@ -288,33 +288,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.3.0</version>
-                <executions>
-                    <execution>
-                        <id>copy</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <artifactItems>
-                        <artifactItem>
-                            <groupId>com.datadoghq</groupId>
-                            <artifactId>dd-java-agent</artifactId>
-                            <version>0.101.0</version>
-                            <type>jar</type>
-                            <overWrite>false</overWrite>
-                            <outputDirectory>${project.build.directory}/dd-java-agent</outputDirectory>
-                            <destFileName>dd-java-agent.jar</destFileName>
-                        </artifactItem>
-                    </artifactItems>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
 

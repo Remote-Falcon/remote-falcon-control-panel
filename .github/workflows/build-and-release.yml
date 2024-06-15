@@ -40,6 +40,9 @@ jobs:
           context: .
           push: true
           tags: ${{ env.REGISTRY }}/${{ steps.repository_string.outputs.lowercase }}:${{ github.sha }}
+          build-args: |
+            DD_GIT_REPOSITORY_URL=${{ github.server_url }}/${{ github.repository }}.git
+            DD_GIT_COMMIT_SHA=${{ github.sha }}
   release-test:
     name: Release Test
     environment: test
@@ -60,6 +63,7 @@ jobs:
         env:
           Namespace: remote-falcon-test
           Application: remote-falcon-control-panel
+          Version: ${{ github.sha }}
           Env: test
           Replicas: 1
           Image: ${{ env.REGISTRY }}/${{ steps.repository_string.outputs.lowercase }}:${{ github.sha }}
@@ -100,6 +104,7 @@ jobs:
         env:
           Namespace: remote-falcon
           Application: remote-falcon-control-panel
+          Version: ${{ github.sha }}
           Env: prod
           Replicas: 2
           Image: ${{ env.REGISTRY }}/${{ steps.repository_string.outputs.lowercase }}:${{ github.sha }}

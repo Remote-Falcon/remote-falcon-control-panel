@@ -12,6 +12,7 @@ metadata:
   labels:
     tags.datadoghq.com/env: #{Env}#
     tags.datadoghq.com/service: #{Application}#
+    tags.datadoghq.com/version: #{Version}#
 spec:
   replicas: #{Replicas}#
   selector:
@@ -25,6 +26,7 @@ spec:
         app: #{Application}#
         tags.datadoghq.com/env: #{Env}#
         tags.datadoghq.com/service: #{Application}#
+        tags.datadoghq.com/version: #{Version}#
     spec:
       volumes:
         - hostPath:
@@ -91,6 +93,10 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.labels['tags.datadoghq.com/service']
+        - name: DD_VERSION
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['tags.datadoghq.com/version']
         - name: DD_LOGS_INJECTION
           value: "true"
         startupProbe:
