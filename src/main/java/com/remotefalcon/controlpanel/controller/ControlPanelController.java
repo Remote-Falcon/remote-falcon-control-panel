@@ -2,6 +2,7 @@ package com.remotefalcon.controlpanel.controller;
 
 import com.remotefalcon.controlpanel.aop.RequiresAccess;
 import com.remotefalcon.controlpanel.response.GitHubIssueResponse;
+import com.remotefalcon.controlpanel.response.Patrons;
 import com.remotefalcon.controlpanel.service.ControlPanelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,5 +19,10 @@ public class ControlPanelController {
   @RequiresAccess
   public ResponseEntity<List<GitHubIssueResponse>> gitHubIssues() {
     return this.controlPanelService.gitHubIssues();
+  }
+
+  @GetMapping("/controlPanel/patrons")
+  public ResponseEntity<List<Patrons>> patrons() {
+    return this.controlPanelService.patrons();
   }
 }

@@ -143,6 +143,16 @@
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.33</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.Remote-Falcon</groupId>
+            <artifactId>remote-falcon-library</artifactId>
+            <version>35a17c76bb</version>
+        </dependency>
+        <dependency>
+            <groupId>com.patreon</groupId>
+            <artifactId>patreon</artifactId>
+            <version>0.4.2</version>
+        </dependency>
 
         <!--TESTING-->
         <dependency>
@@ -167,11 +177,6 @@
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
             <version>${jacoco.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.github.Remote-Falcon</groupId>
-            <artifactId>remote-falcon-library</artifactId>
-            <version>35a17c76bb</version>
         </dependency>
     </dependencies>
 
