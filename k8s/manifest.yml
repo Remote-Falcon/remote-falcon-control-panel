@@ -85,6 +85,11 @@ spec:
             secretKeyRef:
               name: remote-falcon-control-panel
               key: jwt-viewer
+        - name: patreon.access-token
+          valueFrom:
+            secretKeyRef:
+              name: remote-falcon-control-panel
+              key: patreon-access-token
         - name: DD_ENV
           valueFrom:
             fieldRef:
