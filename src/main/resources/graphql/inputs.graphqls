@@ -25,6 +25,7 @@ input PreferenceInput {
     sequencesPlayed: Int
     pageTitle: String
     pageIconUrl: String
+    showOnMap: Boolean
 }
 
 input SequenceInput {

@@ -1,13 +1,14 @@
 package com.remotefalcon.controlpanel.service;
 
-import com.remotefalcon.library.documents.Show;
-import com.remotefalcon.library.models.Request;
-import com.remotefalcon.library.models.Sequence;
-import com.remotefalcon.library.enums.StatusResponse;
-import com.remotefalcon.library.enums.ViewerControlMode;
+import com.remotefalcon.controlpanel.response.ShowsOnAMap;
 import com.remotefalcon.controlpanel.repository.ShowRepository;
 import com.remotefalcon.controlpanel.util.AuthUtil;
 import com.remotefalcon.controlpanel.util.ClientUtil;
+import com.remotefalcon.library.documents.Show;
+import com.remotefalcon.library.enums.StatusResponse;
+import com.remotefalcon.library.enums.ViewerControlMode;
+import com.remotefalcon.library.models.Request;
+import com.remotefalcon.library.models.Sequence;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -88,5 +90,21 @@ public class GraphQLQueryService {
             return show.get();
         }
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
+    }
+
+    public List<ShowsOnAMap> showsOnAMap() {
+        List<Show> allShows = this.showRepository.findAll();
+        List<ShowsOnAMap> showsOnAMapList = new ArrayList<>();
+        allShows.forEach(show -> {
+            if(show.getPreferences() != null
+                    && show.getPreferences().getShowOnMap()) {
+                showsOnAMapList.add(ShowsOnAMap.builder()
+                                .showName(show.getShowName())
+                                .showLatitude(show.getPreferences().getShowLatitude())
+                                .showLongitude(show.getPreferences().getShowLongitude())
+                        .build());
+            }
+        });
+        return showsOnAMapList;
     }
 }

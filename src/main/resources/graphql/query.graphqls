@@ -4,4 +4,5 @@ type Query {
     getShow: Show
     dashboardLiveStats(startDate: Long!, endDate: Long!, timezone: String = "America/Chicago"): DashboardLiveStats
     dashboardStats(startDate: Long!, endDate: Long!, timezone: String = "America/Chicago"): DashboardStats
+    showsOnAMap: [ShowsOnAMap]
 }
