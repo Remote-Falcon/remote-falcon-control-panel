@@ -1,7 +1,7 @@
 package com.remotefalcon.controlpanel.service;
 
-import com.remotefalcon.controlpanel.response.ShowsOnAMap;
 import com.remotefalcon.controlpanel.repository.ShowRepository;
+import com.remotefalcon.controlpanel.response.ShowsOnAMap;
 import com.remotefalcon.controlpanel.util.AuthUtil;
 import com.remotefalcon.controlpanel.util.ClientUtil;
 import com.remotefalcon.library.documents.Show;
@@ -93,7 +93,7 @@ public class GraphQLQueryService {
     }
 
     public List<ShowsOnAMap> showsOnAMap() {
-        List<Show> allShows = this.showRepository.findAll();
+        List<Show> allShows = this.showRepository.getShowsOnMap();
         List<ShowsOnAMap> showsOnAMapList = new ArrayList<>();
         allShows.forEach(show -> {
             if(show.getPreferences() != null
