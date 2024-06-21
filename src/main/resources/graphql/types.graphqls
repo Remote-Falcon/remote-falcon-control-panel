@@ -61,6 +61,7 @@ type Preference {
     sequencesPlayed: Int
     pageTitle: String
     pageIconUrl: String
+    showOnMap: Boolean
 }
 
 type Sequence {
@@ -145,4 +146,10 @@ type Stat {
 type SequenceStat {
     name: String
     total: Int
+}
+
+type ShowsOnAMap {
+    showName: String
+    showLatitude: Float
+    showLongitude: Float
 }

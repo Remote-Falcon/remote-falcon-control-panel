@@ -1,6 +1,7 @@
 package com.remotefalcon.controlpanel.controller;
 
 import com.remotefalcon.controlpanel.aop.RequiresAccess;
+import com.remotefalcon.controlpanel.response.ShowsOnAMap;
 import com.remotefalcon.library.documents.Show;
 import com.remotefalcon.library.models.*;
 import com.remotefalcon.controlpanel.response.dashboard.DashboardLiveStatsResponse;
@@ -161,5 +162,11 @@ public class GraphQLController {
     @RequiresAccess()
     public DashboardLiveStatsResponse dashboardLiveStats(@Argument Long startDate, @Argument Long endDate, @Argument String timezone) {
         return dashboardService.dashboardLiveStats(startDate, endDate, timezone);
+    }
+
+    @QueryMapping
+    @RequiresAccess()
+    public List<ShowsOnAMap> showsOnAMap() {
+        return graphQLQueryService.showsOnAMap();
     }
 }
