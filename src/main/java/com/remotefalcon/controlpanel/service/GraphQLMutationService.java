@@ -14,6 +14,7 @@ import com.sendgrid.Response;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -28,9 +29,11 @@ import java.util.Optional;
 public class GraphQLMutationService {
     private final EmailUtil emailUtil;
     private final AuthUtil authUtil;
-    private final ClientUtil clientUtil;
     private final ShowRepository showRepository;
     private final HttpServletRequest httpServletRequest;
+
+    @Value("${auto-validate-email}")
+    Boolean autoValidateEmail;
 
     public Boolean signUp(String firstName, String lastName, String showName) {
         String showSubdomain = showName.replaceAll("\\s", "").toLowerCase();
@@ -49,9 +52,11 @@ public class GraphQLMutationService {
             Show newShow = this.createDefaultShowDocument(firstName, lastName, showName, email,
                     hashedPassword, showToken, showSubdomain);
 
-            Response emailResponse = this.emailUtil.sendSignUpEmail(newShow);
-            if(emailResponse.getStatusCode() != 202) {
-                throw new RuntimeException(StatusResponse.EMAIL_CANNOT_BE_SENT.name());
+            if(!autoValidateEmail) {
+                Response emailResponse = this.emailUtil.sendSignUpEmail(newShow);
+                if(emailResponse.getStatusCode() != 202) {
+                    throw new RuntimeException(StatusResponse.EMAIL_CANNOT_BE_SENT.name());
+                }
             }
 
             this.showRepository.save(newShow);
@@ -75,7 +80,7 @@ public class GraphQLMutationService {
                         .facebookUrl(null)
                         .youtubeUrl(null)
                         .build())
-                .emailVerified(false)
+                .emailVerified(this.autoValidateEmail ? true : false)
                 .createdDate(LocalDateTime.now())
                 .expireDate(LocalDateTime.now().plusDays(90))
                 .showRole(ShowRole.USER)
