@@ -12,6 +12,7 @@ import com.remotefalcon.library.models.Sequence;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -84,7 +85,9 @@ public class GraphQLQueryService {
             show.get().setSequences(sequences);
 
             List<Request> jukeboxRequests = show.get().getRequests();
-            jukeboxRequests.sort(Comparator.comparing(Request::getPosition));
+            if(CollectionUtils.isNotEmpty(jukeboxRequests)) {
+                jukeboxRequests.sort(Comparator.comparing(Request::getPosition));
+            }
             show.get().setRequests(jukeboxRequests);
 
             return show.get();
