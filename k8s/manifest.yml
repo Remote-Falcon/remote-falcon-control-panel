@@ -51,7 +51,7 @@ spec:
         - name: SPRING_PROFILES_ACTIVE
           value: #{Env}#
         - name: auto-validate-email
-          value: false
+          value: "false"
         - name: spring.datasource.username
           valueFrom:
             secretKeyRef:
