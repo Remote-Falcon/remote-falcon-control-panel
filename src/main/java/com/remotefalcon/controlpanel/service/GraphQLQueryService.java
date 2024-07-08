@@ -111,12 +111,8 @@ public class GraphQLQueryService {
         return showsOnAMapList;
     }
 
-    public List<Show> getShowsAutoSuggest(String showName) {
-        return this.showRepository.findAllByShowNameContainingIgnoreCase(showName);
-    }
-
-    public Show getShowByShowName(String showName) {
-        Optional<Show> show = this.showRepository.findByShowName(showName);
+    public Show getShowByShowSubdomain(String showSubdomain) {
+        Optional<Show> show = this.showRepository.findByShowSubdomain(showSubdomain);
         return show.orElse(null);
     }
 }

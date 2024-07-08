@@ -179,13 +179,7 @@ public class GraphQLController {
 
     @QueryMapping
     @RequiresAdminAccess
-    public List<Show> getShowsAutoSuggest(@Argument String showName) {
-        return graphQLQueryService.getShowsAutoSuggest(showName);
-    }
-
-    @QueryMapping
-    @RequiresAdminAccess
-    public Show getShowByShowName(@Argument String showName) {
-        return graphQLQueryService.getShowByShowName(showName);
+    public Show getShowByShowSubdomain(@Argument String showSubdomain) {
+        return graphQLQueryService.getShowByShowSubdomain(showSubdomain);
     }
 }
