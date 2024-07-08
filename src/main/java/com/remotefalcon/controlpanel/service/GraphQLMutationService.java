@@ -1,15 +1,14 @@
 package com.remotefalcon.controlpanel.service;
 
+import com.remotefalcon.controlpanel.repository.ShowRepository;
+import com.remotefalcon.controlpanel.util.AuthUtil;
+import com.remotefalcon.controlpanel.util.EmailUtil;
+import com.remotefalcon.controlpanel.util.RandomUtil;
 import com.remotefalcon.library.documents.Show;
-import com.remotefalcon.library.models.*;
 import com.remotefalcon.library.enums.ShowRole;
 import com.remotefalcon.library.enums.StatusResponse;
 import com.remotefalcon.library.enums.ViewerControlMode;
-import com.remotefalcon.controlpanel.repository.ShowRepository;
-import com.remotefalcon.controlpanel.util.AuthUtil;
-import com.remotefalcon.controlpanel.util.ClientUtil;
-import com.remotefalcon.controlpanel.util.EmailUtil;
-import com.remotefalcon.controlpanel.util.RandomUtil;
+import com.remotefalcon.library.models.*;
 import com.sendgrid.Response;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -125,7 +124,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean forgotPassword(String email) {
-        Optional<Show> show = this.showRepository.findByEmail(email);
+        Optional<Show> show = this.showRepository.findByEmailIgnoreCase(email);
         if(show.isPresent()) {
             String passwordResetLink = RandomUtil.generateToken(25);
             show.get().setPasswordResetLink(passwordResetLink);
@@ -393,5 +392,14 @@ public class GraphQLMutationService {
             return true;
         }
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
+    }
+
+    public Boolean adminUpdateShow(Show show) {
+        Optional<Show> optionalShow = this.showRepository.findByShowToken(show.getShowToken());
+        if(optionalShow.isPresent()) {
+            show.setId(optionalShow.get().getId());
+            this.showRepository.save(show);
+        }
+        return true;
     }
 }

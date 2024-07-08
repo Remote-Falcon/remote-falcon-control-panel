@@ -28,4 +28,13 @@ public class AccessAspect {
     }
     throw new RuntimeException(StatusResponse.INVALID_JWT.name());
   }
+
+  @Around("@annotation(RequiresAdminAccess)")
+  public Object isAdminJwtValid(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
+    HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+    if(this.authUtil.isAdminJwtValid(request)) {
+      return proceedingJoinPoint.proceed();
+    }
+    throw new RuntimeException(StatusResponse.INVALID_JWT.name());
+  }
 }

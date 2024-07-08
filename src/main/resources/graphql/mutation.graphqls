@@ -17,4 +17,5 @@ type Mutation {
     deleteSingleRequest(position: Int!): Boolean
     deleteAllRequests: Boolean
     resetAllVotes: Boolean
+    adminUpdateShow(show: ShowInput!): Boolean
 }
