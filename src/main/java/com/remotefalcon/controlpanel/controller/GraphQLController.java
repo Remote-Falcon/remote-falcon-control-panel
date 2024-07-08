@@ -1,6 +1,7 @@
 package com.remotefalcon.controlpanel.controller;
 
 import com.remotefalcon.controlpanel.aop.RequiresAccess;
+import com.remotefalcon.controlpanel.aop.RequiresAdminAccess;
 import com.remotefalcon.controlpanel.response.ShowsOnAMap;
 import com.remotefalcon.library.documents.Show;
 import com.remotefalcon.library.models.*;
@@ -132,6 +133,12 @@ public class GraphQLController {
         return this.graphQLMutationService.resetAllVotes();
     }
 
+    @MutationMapping
+    @RequiresAdminAccess
+    public Boolean adminUpdateShow(@Argument Show show) {
+        return this.graphQLMutationService.adminUpdateShow(show);
+    }
+
 
     /*******
      Queries
@@ -168,5 +175,17 @@ public class GraphQLController {
     @RequiresAccess()
     public List<ShowsOnAMap> showsOnAMap() {
         return graphQLQueryService.showsOnAMap();
+    }
+
+    @QueryMapping
+    @RequiresAdminAccess
+    public List<Show> getShowsAutoSuggest(@Argument String showName) {
+        return graphQLQueryService.getShowsAutoSuggest(showName);
+    }
+
+    @QueryMapping
+    @RequiresAdminAccess
+    public Show getShowByShowName(@Argument String showName) {
+        return graphQLQueryService.getShowByShowName(showName);
     }
 }

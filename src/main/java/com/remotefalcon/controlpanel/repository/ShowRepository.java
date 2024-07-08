@@ -13,11 +13,14 @@ public interface ShowRepository extends MongoRepository<Show, String> {
     @Transactional
     void deleteByShowToken(String showToken);
     Optional<Show> findByShowToken(String showToken);
+    Optional<Show> findByShowName(String showName);
     Optional<Show> findByShowSubdomain(String showSubdomain);
     Optional<Show> findByEmailOrShowSubdomain(String email, String showSubdomain);
-    Optional<Show> findByEmail(String email);
+    Optional<Show> findByEmailIgnoreCase(String email);
     Optional<Show> findByPasswordResetLinkAndPasswordResetExpiryGreaterThan(String passwordResetLink, LocalDateTime passwordResetExpiry);
 
     @Query("{ 'preferences.showOnMap' : true }")
     List<Show> getShowsOnMap();
+
+    List<Show> findAllByShowNameContainingIgnoreCase(String showName);
 }

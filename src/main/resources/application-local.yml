@@ -3,3 +3,5 @@ web:
 
 server:
   port: 8081
+
+auto-validate-email: true

@@ -1,3 +1,42 @@
+input ShowInput {
+    showToken: ID
+    email: String
+    showName: String
+    showSubdomain: String
+    emailVerified: Boolean
+    createdDate: String
+    lastLoginDate: String
+    expireDate: String
+    pluginVersion: String
+    fppVersion: String
+    lastLoginIp: String
+    showRole: String
+
+    apiAccess: ApiAccessInput
+    userProfile: UserProfileInput
+    preferences: PreferenceInput
+    sequences: [SequenceInput]
+    sequenceGroups: [SequenceGroupInput]
+    psaSequences: [PsaSequenceInput]
+    pages: [PageInput]
+    requests: [RequestInput]
+    votes: [VoteInput]
+    activeViewers: [ActiveViewerInput]
+    playingNow: String
+    playingNext: String
+}
+
+input ActiveViewerInput {
+    ipAddress: String
+    visitDateTime: String
+}
+
+input ApiAccessInput {
+    apiAccessToken: String
+    apiAccessSecret: String
+    apiAccessActive: Boolean
+}
+
 input UserProfileInput {
     firstName: String
     lastName: String

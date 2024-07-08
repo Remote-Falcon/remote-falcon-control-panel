@@ -9,6 +9,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.remotefalcon.library.documents.Show;
 import com.remotefalcon.controlpanel.dto.TokenDTO;
+import com.remotefalcon.library.enums.ShowRole;
 import com.remotefalcon.library.enums.StatusResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class AuthUtil {
     jwtPayload.put("showToken", show.getShowToken());
     jwtPayload.put("email", show.getEmail());
     jwtPayload.put("showSubdomain", show.getShowSubdomain());
+    jwtPayload.put("showRole", show.getShowRole().name());
     try {
       Algorithm algorithm = Algorithm.HMAC256(jwtSignKey);
       return JWT.create().withClaim("user-data", jwtPayload)
@@ -62,6 +64,7 @@ public class AuthUtil {
               .showToken((String) userDataMap.get("showToken"))
               .email((String) userDataMap.get("email"))
               .showSubdomain((String) userDataMap.get("showSubdomain"))
+              .showRole(ShowRole.valueOf((String) userDataMap.get("showRole")))
               .build();
     }catch (JWTDecodeException jde) {
       throw new RuntimeException(StatusResponse.INVALID_JWT.name());
@@ -79,6 +82,22 @@ public class AuthUtil {
       verifier.verify(token);
       this.tokenDTO = getJwtPayload();
       return true;
+    } catch (JWTVerificationException e) {
+      throw new RuntimeException(StatusResponse.INVALID_JWT.name());
+    }
+  }
+
+  public Boolean isAdminJwtValid(HttpServletRequest httpServletRequest) throws JWTVerificationException {
+    try {
+      String token = this.getTokenFromRequest(httpServletRequest);
+      if (StringUtils.isEmpty(token)) {
+        throw new RuntimeException(StatusResponse.INVALID_JWT.name());
+      }
+      Algorithm algorithm = Algorithm.HMAC256(jwtSignKey);
+      JWTVerifier verifier = JWT.require(algorithm).withIssuer("remotefalcon").build();
+      verifier.verify(token);
+      TokenDTO tokenDTO = this.tokenDTO = getJwtPayload();
+      return tokenDTO.getShowRole() == ShowRole.ADMIN;
     } catch (JWTVerificationException e) {
       throw new RuntimeException(StatusResponse.INVALID_JWT.name());
     }

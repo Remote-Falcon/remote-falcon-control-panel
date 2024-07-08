@@ -37,7 +37,7 @@ public class GraphQLQueryService {
             String ipAddress = this.clientUtil.getClientIp(httpServletRequest);
             String email = basicAuthCredentials[0];
             String password = basicAuthCredentials[1];
-            Optional<Show> optionalShow = this.showRepository.findByEmail(email);
+            Optional<Show> optionalShow = this.showRepository.findByEmailIgnoreCase(email);
             if (optionalShow.isEmpty()) {
                 throw new RuntimeException(StatusResponse.SHOW_NOT_FOUND.name());
             }
@@ -109,5 +109,14 @@ public class GraphQLQueryService {
             }
         });
         return showsOnAMapList;
+    }
+
+    public List<Show> getShowsAutoSuggest(String showName) {
+        return this.showRepository.findAllByShowNameContainingIgnoreCase(showName);
+    }
+
+    public Show getShowByShowName(String showName) {
+        Optional<Show> show = this.showRepository.findByShowName(showName);
+        return show.orElse(null);
     }
 }
