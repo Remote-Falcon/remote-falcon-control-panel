@@ -43,50 +43,10 @@ jobs:
           build-args: |
             DD_GIT_REPOSITORY_URL=${{ github.server_url }}/${{ github.repository }}.git
             DD_GIT_COMMIT_SHA=${{ github.sha }}
-  release-test:
-    name: Release Test
-    environment: test
-    needs: [build-and-push]
-    runs-on: ubuntu-latest
-    steps:
-      - id: repository_string
-        uses: ASzc/change-string-case-action@v6
-        with:
-          string: ${{ github.repository }}
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - uses: cschleiden/replace-tokens@v1
-        name: Replace tokens in manifest
-        with:
-          files: './k8s/manifest.yml'
-        env:
-          Namespace: remote-falcon-test
-          Application: remote-falcon-control-panel
-          Version: ${{ github.sha }}
-          Env: test
-          Replicas: 1
-          Image: ${{ env.REGISTRY }}/${{ steps.repository_string.outputs.lowercase }}:${{ github.sha }}
-          Requests.Memory: 500Mi
-          Requests.CPU: 250m
-          Limits.Memory: 750Mi
-          Limits.CPU: 500m
-          Host: remotefalcon.dev
-
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-
-      - name: Save DigitalOcean kubeconfig
-        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 4fee5fb4-939b-4d7a-8eb0-1b31115a74dc
-
-      - name: Kubectl apply
-        run: kubectl apply -f ./k8s/manifest.yml
   release-production:
     name: Release Production
     environment: prod
-    needs: [build-and-push, release-test]
+    needs: [build-and-push]
     runs-on: ubuntu-latest
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:

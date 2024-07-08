@@ -13,6 +13,7 @@ import com.remotefalcon.controlpanel.util.RandomUtil;
 import com.sendgrid.Response;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -354,7 +355,7 @@ public class GraphQLMutationService {
                 request.setPosition(requestPosition);
                 requestPosition++;
             }
-            if(updatedRequests.isEmpty()) {
+            if(CollectionUtils.isEmpty(updatedRequests)) {
                 show.get().setPlayingNext("");
             }else {
                 show.get().setPlayingNext(updatedRequests.get(0).getSequence().getDisplayName());
