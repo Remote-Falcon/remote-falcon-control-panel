@@ -6,5 +6,5 @@ type Query {
     dashboardStats(startDate: Long!, endDate: Long!, timezone: String = "America/Chicago"): DashboardStats
     showsOnAMap: [ShowsOnAMap]
     getShowsAutoSuggest(showName: String!): [Show]
-    getShowByShowName(showName: String!): Show
+    getShowByShowSubdomain(showSubdomain: String!): Show
 }
