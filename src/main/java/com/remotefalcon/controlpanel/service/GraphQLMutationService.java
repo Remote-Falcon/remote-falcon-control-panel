@@ -398,6 +398,7 @@ public class GraphQLMutationService {
         Optional<Show> optionalShow = this.showRepository.findByShowToken(show.getShowToken());
         if(optionalShow.isPresent()) {
             show.setId(optionalShow.get().getId());
+            show.setPassword(optionalShow.get().getPassword());
             this.showRepository.save(show);
         }
         return true;
