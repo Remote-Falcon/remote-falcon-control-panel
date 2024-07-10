@@ -82,11 +82,6 @@ spec:
             secretKeyRef:
               name: remote-falcon-control-panel
               key: jwt-user
-        - name: jwt.viewer
-          valueFrom:
-            secretKeyRef:
-              name: remote-falcon-control-panel
-              key: jwt-viewer
         - name: DD_ENV
           valueFrom:
             fieldRef:

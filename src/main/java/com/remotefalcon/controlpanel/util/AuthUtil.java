@@ -31,9 +31,6 @@ public class AuthUtil {
   @Value("${jwt.user}")
   String jwtSignKey;
 
-  @Value("${jwt.viewer}")
-  String jwtViewerSignKey;
-
   public TokenDTO tokenDTO;
 
   public String signJwt(Show show) {
