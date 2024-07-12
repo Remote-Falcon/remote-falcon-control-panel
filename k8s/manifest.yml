@@ -130,6 +130,8 @@ metadata:
   namespace: #{Namespace}#
   labels:
     app: #{Application}#
+    kubernetes.io/service-name: #{Application}#
+    app.kubernetes.io/name: #{Application}#
 spec:
   type: ClusterIP
   ports:
@@ -141,19 +143,21 @@ spec:
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: #{Application}#-servicemonitor
+  name: #{Application}#
   namespace: kube-prometheus-stack
   labels:
-    app: #{Application}#
-    release: prometheus
+    kubernetes.io/service-name: #{Application}#
+    app.kubernetes.io/name: #{Application}#
 spec:
   selector:
     matchLabels:
-      app: #{Application}#
+      kubernetes.io/service-name: #{Application}#
+      app.kubernetes.io/name: #{Application}#
   endpoints:
     - port: web
       interval: 5s
       path: "/actuator/prometheus"
+      targetPort: 8080
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
