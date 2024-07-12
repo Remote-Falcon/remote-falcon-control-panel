@@ -84,3 +84,11 @@ jobs:
 
       - name: Kubectl apply
         run: kubectl apply -f ./k8s/manifest.yml
+
+      - name: Kubectl rollout monitor
+        run : |
+          if ! kubectl rollout status deployment remote-falcon-control-panel --namespace remote-falcon; then \
+            kubectl rollout undo deployment remote-falcon-control-panel --namespace remote-falcon \
+            kubectl rollout status deployment remote-falcon-control-panel --namespace remote-falcon \
+            exit 1 \
+          fi \
