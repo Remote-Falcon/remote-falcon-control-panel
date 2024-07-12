@@ -19,7 +19,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: [ "prometheus" ]
+        include: [ "prometheus", "health" ]
       cors:
         allowed-origins: "*"
         allowed-methods: "OPTIONS, GET, POST, PUT, DELETE"
