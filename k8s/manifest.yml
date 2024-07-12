@@ -158,7 +158,7 @@ spec:
   endpoints:
     - port: web
       interval: 5s
-      path: "/remote-falcon-control-panel/actuator/prometheus"
+      path: "/remote-falcon-control-panel/actuator/metrics"
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
