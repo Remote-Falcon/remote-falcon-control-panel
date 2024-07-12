@@ -18,6 +18,8 @@ info:
 management:
   endpoints:
     web:
+      exposure:
+        include: [ "prometheus" ]
       cors:
         allowed-origins: "*"
         allowed-methods: "OPTIONS, GET, POST, PUT, DELETE"
