@@ -140,26 +140,6 @@ spec:
   selector:
     app: #{Application}#
 ---
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: #{Application}#
-  namespace: #{Namespace}#
-  labels:
-    app: #{Application}#
-    kubernetes.io/service-name: #{Application}#
-    app.kubernetes.io/name: #{Application}#
-spec:
-  selector:
-    matchLabels:
-      app: #{Application}#
-      kubernetes.io/service-name: #{Application}#
-      app.kubernetes.io/name: #{Application}#
-  endpoints:
-    - port: web
-      interval: 5s
-      path: "/remote-falcon-control-panel/actuator/prometheus"
----
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

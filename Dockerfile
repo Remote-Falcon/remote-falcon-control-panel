@@ -18,7 +18,7 @@ RUN echo ${DD_GIT_REPOSITORY_URL}
 RUN echo ${DD_GIT_COMMIT_SHA}
 
 ENTRYPOINT exec java $JAVA_OPTS -javaagent:/usr/app/opentelemetry-javaagent.jar \
-                                -Dotel.exporter.otlp.endpoint=http://10.245.51.31:4317 \
+                                -Dotel.exporter.otlp.endpoint=http://localhost:4317 \
                                 -Dotel.resource.attributes=service.name=remote-falcon-control-panel \
                                 -XX:FlightRecorderOptions=stackdepth=256 \
                                 -jar /usr/app/remote-falcon-control-panel.jar
