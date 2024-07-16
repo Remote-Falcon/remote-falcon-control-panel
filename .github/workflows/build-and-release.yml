@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - 'main'
+      - "main"
 
 permissions:
   contents: write
@@ -40,9 +40,6 @@ jobs:
           context: .
           push: true
           tags: ${{ env.REGISTRY }}/${{ steps.repository_string.outputs.lowercase }}:${{ github.sha }}
-          build-args: |
-            DD_GIT_REPOSITORY_URL=${{ github.server_url }}/${{ github.repository }}.git
-            DD_GIT_COMMIT_SHA=${{ github.sha }}
   release-production:
     name: Release Production
     environment: prod
@@ -60,7 +57,7 @@ jobs:
       - uses: cschleiden/replace-tokens@v1
         name: Replace tokens in manifest
         with:
-          files: './k8s/manifest.yml'
+          files: "./k8s/manifest.yml"
         env:
           Namespace: remote-falcon
           Application: remote-falcon-control-panel
@@ -86,4 +83,4 @@ jobs:
         run: kubectl apply -f ./k8s/manifest.yml
 
       - name: Kubectl rollout monitor
-        run : kubectl rollout status deployment remote-falcon-control-panel --namespace remote-falcon
+        run: kubectl rollout status deployment remote-falcon-control-panel --namespace remote-falcon
