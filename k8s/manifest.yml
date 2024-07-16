@@ -11,9 +11,6 @@ metadata:
   namespace: #{Namespace}#
   labels:
     app: #{Application}#
-    tags.datadoghq.com/env: #{Env}#
-    tags.datadoghq.com/service: #{Application}#
-    tags.datadoghq.com/version: #{Version}#
 spec:
   replicas: #{Replicas}#
   selector:
@@ -26,18 +23,9 @@ spec:
       maxUnavailable: 0
   template:
     metadata:
-      annotations:
-        com.datadoghq.ad.logs: '[{"source": "java", "service": "remote-falcon-control-panel", "log_processing_rules": [{"type": "multi_line", "name": "log_start_with_date", "pattern" : "\\d{4}-(0?[1-9]|1[012])-(0?[1-9]|[12][0-9]|3[01])"}]}]'
       labels:
         app: #{Application}#
-        tags.datadoghq.com/env: #{Env}#
-        tags.datadoghq.com/service: #{Application}#
-        tags.datadoghq.com/version: #{Version}#
     spec:
-      volumes:
-        - hostPath:
-            path: /var/run/datadog/
-          name: apmsocketpath
       containers:
       - name: #{Application}#
         image: #{Image}#
@@ -48,9 +36,6 @@ spec:
           limits:
             memory: #{Limits.Memory}#
             cpu: #{Limits.CPU}#
-        volumeMounts:
-          - name: apmsocketpath
-            mountPath: /var/run/datadog
         ports:
         - containerPort: 8080
         env:
@@ -88,20 +73,6 @@ spec:
             secretKeyRef:
               name: remote-falcon-control-panel
               key: jwt-user
-        - name: DD_ENV
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.labels['tags.datadoghq.com/env']
-        - name: DD_SERVICE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.labels['tags.datadoghq.com/service']
-        - name: DD_VERSION
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.labels['tags.datadoghq.com/version']
-        - name: DD_LOGS_INJECTION
-          value: "true"
         startupProbe:
           httpGet:
             path: /remote-falcon-control-panel/actuator/health
@@ -128,15 +99,10 @@ kind: Service
 metadata:
   name: #{Application}#
   namespace: #{Namespace}#
-  labels:
-    app: #{Application}#
-    kubernetes.io/service-name: #{Application}#
-    app.kubernetes.io/name: #{Application}#
 spec:
   type: ClusterIP
   ports:
-  - name: web
-    port: 8080
+  - port: 8080
   selector:
     app: #{Application}#
 ---
