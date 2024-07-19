@@ -10,7 +10,7 @@ EXPOSE 8080
 ADD 'https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar' /usr/app/opentelemetry-javaagent.jar
 
 ENTRYPOINT exec java $JAVA_OPTS -javaagent:/usr/app/opentelemetry-javaagent.jar \
-                                -Dotel.exporter.otlp.endpoint=http://signoz-otel-collector.platform.svc.cluster.local:4318 \
+                                -Dotel.exporter.otlp.endpoint=https://otel.remotefalcon.dev \
                                 -Dotel.resource.attributes=service.name=remote-falcon-control-panel \
                                 -XX:FlightRecorderOptions=stackdepth=256 \
                                 -jar /usr/app/remote-falcon-control-panel.jar
