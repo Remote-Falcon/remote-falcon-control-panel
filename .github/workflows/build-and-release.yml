@@ -40,6 +40,9 @@ jobs:
           context: .
           push: true
           tags: ${{ env.REGISTRY }}/${{ steps.repository_string.outputs.lowercase }}:${{ github.sha }}
+          build-args: |
+            COLLECT_OTEL=true
+            OTEL_COLLECTOR_ENDPOINT=https://otel.remotefalcon.dev
   release-production:
     name: Release Production
     environment: prod
