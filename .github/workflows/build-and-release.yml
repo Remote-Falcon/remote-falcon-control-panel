@@ -41,8 +41,7 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY }}/${{ steps.repository_string.outputs.lowercase }}:${{ github.sha }}
           build-args: |
-            COLLECT_OTEL=true
-            OTEL_COLLECTOR_ENDPOINT=https://otel.remotefalcon.dev
+            "OTEL_OPTS=-javaagent:/usr/app/opentelemetry-javaagent.jar -Dotel.exporter.otlp.endpoint=https://otel.remotefalcon.dev -Dotel.resource.attributes=service.name=remote-falcon-control-panel"
   release-production:
     name: Release Production
     environment: prod
