@@ -7,6 +7,9 @@ FROM openjdk:17-oracle
 COPY --from=build /usr/src/app/target/remote-falcon-control-panel.jar /usr/app/remote-falcon-control-panel.jar
 EXPOSE 8080
 
+ARG OTEL_OPTS
+ENV OTEL_OPTS=${OTEL_OPTS}
+
 ADD 'https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar' /usr/app/opentelemetry-javaagent.jar
 
 ENTRYPOINT exec java $JAVA_OPTS $OTEL_OPTS -XX:FlightRecorderOptions=stackdepth=256 -jar /usr/app/remote-falcon-control-panel.jar
