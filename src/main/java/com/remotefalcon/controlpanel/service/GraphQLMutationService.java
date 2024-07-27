@@ -80,7 +80,7 @@ public class GraphQLMutationService {
                         .facebookUrl(null)
                         .youtubeUrl(null)
                         .build())
-                .emailVerified(this.autoValidateEmail ? true : false)
+                .emailVerified(this.autoValidateEmail)
                 .createdDate(LocalDateTime.now())
                 .expireDate(LocalDateTime.now().plusDays(90))
                 .showRole(ShowRole.USER)
