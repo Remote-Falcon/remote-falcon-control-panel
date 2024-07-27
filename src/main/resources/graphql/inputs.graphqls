@@ -65,6 +65,7 @@ input PreferenceInput {
     pageTitle: String
     pageIconUrl: String
     showOnMap: Boolean
+    selfHostedRedirectUrl: String
 }
 
 input SequenceInput {

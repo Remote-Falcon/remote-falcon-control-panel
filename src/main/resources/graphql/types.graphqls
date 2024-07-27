@@ -62,6 +62,7 @@ type Preference {
     pageTitle: String
     pageIconUrl: String
     showOnMap: Boolean
+    selfHostedRedirectUrl: String
 }
 
 type Sequence {
