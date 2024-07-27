@@ -100,6 +100,7 @@ public class GraphQLMutationService {
                         .managePsa(false)
                         .sequencesPlayed(0)
                         .build())
+                .requests(new ArrayList<>())
                 .stats(Stat.builder()
                         .jukebox(new ArrayList<>())
                         .page(new ArrayList<>())

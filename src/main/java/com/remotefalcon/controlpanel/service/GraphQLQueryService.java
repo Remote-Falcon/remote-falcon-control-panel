@@ -54,6 +54,9 @@ public class GraphQLQueryService {
                 if(show.getPreferences().getViewerControlMode() == null) {
                     show.getPreferences().setViewerControlMode(ViewerControlMode.JUKEBOX);
                 }
+                if(CollectionUtils.isEmpty(show.getRequests())) {
+                    show.setRequests(new ArrayList<>());
+                }
                 this.showRepository.save(show);
                 show.setServiceToken(this.authUtil.signJwt(show));
                 return show;
