@@ -57,6 +57,9 @@ public class GraphQLQueryService {
                 if(CollectionUtils.isEmpty(show.getRequests())) {
                     show.setRequests(new ArrayList<>());
                 }
+                if(CollectionUtils.isEmpty(show.getVotes())) {
+                    show.setVotes(new ArrayList<>());
+                }
                 this.showRepository.save(show);
                 show.setServiceToken(this.authUtil.signJwt(show));
                 return show;
