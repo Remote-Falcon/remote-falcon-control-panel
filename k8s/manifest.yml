@@ -73,6 +73,11 @@ spec:
             secretKeyRef:
               name: remote-falcon-control-panel
               key: jwt-user
+        - name: client.header
+          valueFrom:
+            secretKeyRef:
+              name: remote-falcon-control-panel
+              key: client-header
         startupProbe:
           httpGet:
             path: /remote-falcon-control-panel/actuator/health

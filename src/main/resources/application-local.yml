@@ -4,4 +4,7 @@ web:
 server:
   port: 8081
 
+client:
+  header: "CF-Connecting-IP"
+
 auto-validate-email: true
