@@ -18,4 +18,5 @@ type Mutation {
     deleteAllRequests: Boolean
     resetAllVotes: Boolean
     adminUpdateShow(show: ShowInput!): Boolean
+    deleteNowPlaying: Boolean
 }
