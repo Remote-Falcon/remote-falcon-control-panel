@@ -146,7 +146,7 @@
         <dependency>
             <groupId>com.github.Remote-Falcon</groupId>
             <artifactId>remote-falcon-library</artifactId>
-            <version>2a7f86941e</version>
+            <version>213a53bdbc</version>
         </dependency>
 
         <!--TESTING-->
