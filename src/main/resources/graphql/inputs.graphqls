@@ -54,6 +54,7 @@ input PreferenceInput {
     showLongitude: Float
     allowedRadius: Float
     checkIfVoted: Boolean
+    checkIfRequested: Boolean
     psaEnabled: Boolean
     psaFrequency: Int
     jukeboxRequestLimit: Int

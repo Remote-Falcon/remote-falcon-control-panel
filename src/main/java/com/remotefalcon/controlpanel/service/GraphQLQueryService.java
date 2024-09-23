@@ -9,6 +9,7 @@ import com.remotefalcon.library.enums.StatusResponse;
 import com.remotefalcon.library.enums.ViewerControlMode;
 import com.remotefalcon.library.models.Request;
 import com.remotefalcon.library.models.Sequence;
+import com.remotefalcon.library.models.Stat;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,21 +52,33 @@ public class GraphQLQueryService {
                 show.setLastLoginDate(LocalDateTime.now());
                 show.setExpireDate(LocalDateTime.now().plusYears(1));
                 show.setLastLoginIp(ipAddress);
-                if(show.getPreferences().getViewerControlMode() == null) {
-                    show.getPreferences().setViewerControlMode(ViewerControlMode.JUKEBOX);
-                }
-                if(CollectionUtils.isEmpty(show.getRequests())) {
-                    show.setRequests(new ArrayList<>());
-                }
-                if(CollectionUtils.isEmpty(show.getVotes())) {
-                    show.setVotes(new ArrayList<>());
-                }
+                this.checkFields(show);
                 this.showRepository.save(show);
                 show.setServiceToken(this.authUtil.signJwt(show));
                 return show;
             }
         }
         throw new RuntimeException(StatusResponse.UNAUTHORIZED.name());
+    }
+
+    private void checkFields(Show show) {
+        if(show.getPreferences().getViewerControlMode() == null) {
+            show.getPreferences().setViewerControlMode(ViewerControlMode.JUKEBOX);
+        }
+        if(show.getStats() == null) {
+            show.setStats(Stat.builder()
+                    .jukebox(new ArrayList<>())
+                    .page(new ArrayList<>())
+                    .voting(new ArrayList<>())
+                    .votingWin(new ArrayList<>())
+                    .build());
+        }
+        if(CollectionUtils.isEmpty(show.getRequests())) {
+            show.setRequests(new ArrayList<>());
+        }
+        if(CollectionUtils.isEmpty(show.getVotes())) {
+            show.setVotes(new ArrayList<>());
+        }
     }
 
     public Show verifyPasswordResetLink(String passwordResetLink) {

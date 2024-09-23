@@ -93,6 +93,7 @@ public class GraphQLMutationService {
                         .showLongitude(0.0F)
                         .allowedRadius(1.0F)
                         .checkIfVoted(false)
+                        .checkIfRequested(false)
                         .psaEnabled(false)
                         .jukeboxRequestLimit(0)
                         .hideSequenceCount(0)
@@ -367,14 +368,12 @@ public class GraphQLMutationService {
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
     }
 
-    public Boolean deleteAllRequests() {
+    public Boolean deleteNowPlaying() {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {
-            show.get().setRequests(new ArrayList<>());
-            show.get().setSequences(show.get().getSequences().stream()
-                    .peek(sequence -> sequence.setVisibilityCount(0)).toList());
-            show.get().setSequenceGroups(show.get().getSequenceGroups().stream()
-                    .peek(sequenceGroup -> sequenceGroup.setVisibilityCount(0)).toList());
+            show.get().setPlayingNow("");
+            show.get().setPlayingNext("");
+            show.get().setPlayingNextFromSchedule("");
             this.showRepository.save(show.get());
             return true;
         }
@@ -403,5 +402,19 @@ public class GraphQLMutationService {
             this.showRepository.save(show);
         }
         return true;
+    }
+
+    public Boolean deleteAllRequests() {
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        if(show.isPresent()) {
+            show.get().setRequests(new ArrayList<>());
+            show.get().setSequences(show.get().getSequences().stream()
+                    .peek(sequence -> sequence.setVisibilityCount(0)).toList());
+            show.get().setSequenceGroups(show.get().getSequenceGroups().stream()
+                    .peek(sequenceGroup -> sequenceGroup.setVisibilityCount(0)).toList());
+            this.showRepository.save(show.get());
+            return true;
+        }
+        throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
     }
 }

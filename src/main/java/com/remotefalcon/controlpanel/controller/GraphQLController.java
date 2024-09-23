@@ -139,6 +139,12 @@ public class GraphQLController {
         return this.graphQLMutationService.adminUpdateShow(show);
     }
 
+    @MutationMapping
+    @RequiresAccess
+    public Boolean deleteNowPlaying() {
+        return this.graphQLMutationService.deleteNowPlaying();
+    }
+
 
     /*******
      Queries
