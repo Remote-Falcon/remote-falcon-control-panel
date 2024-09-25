@@ -246,8 +246,12 @@ public class GraphQLMutationService {
                 }
             }
             if(!StringUtils.equalsIgnoreCase(show.get().getShowName(), showName)) {
-                changesMade = true;
                 String showSubdomain = showName.replaceAll("\\s", "").toLowerCase();
+                Optional<Show> showCheck = this.showRepository.findByShowSubdomain(showSubdomain);
+                if(showCheck.isPresent()) {
+                    throw new RuntimeException(StatusResponse.SHOW_EXISTS.name());
+                }
+                changesMade = true;
                 show.get().setShowName(showName);
                 show.get().setShowSubdomain(showSubdomain);
             }
