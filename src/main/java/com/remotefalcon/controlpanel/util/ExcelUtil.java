@@ -67,6 +67,10 @@ public class ExcelUtil {
     headerCell.setCellValue("Unique Visits");
     headerCell.setCellStyle(getHeaderStyle(workbook));
 
+    headerCell = header.createCell(2);
+    headerCell.setCellValue("Viewer IPs");
+    headerCell.setCellStyle(getHeaderStyle(workbook));
+
     AtomicInteger rowIndex = new AtomicInteger(1);
     dashboardStats.getPage().forEach(visit -> {
       Row row = sheet.createRow(rowIndex.get());
@@ -76,6 +80,19 @@ public class ExcelUtil {
 
       cell = row.createCell(1);
       cell.setCellValue(visit.getUnique());
+
+      cell = row.createCell(2);
+      StringBuilder viewerIpsBuilder = new StringBuilder();
+      int viewerIpsIndex = 1;
+      for(String viewer : visit.getViewerIps()) {
+        viewerIpsBuilder.append(viewer);
+        if(visit.getViewerIps().size() > viewerIpsIndex) {
+          viewerIpsBuilder.append("\r\n");
+        }
+        viewerIpsIndex++;
+      }
+      cell.setCellValue(viewerIpsBuilder.toString());
+      cell.setCellStyle(getCellWrapStyle(workbook));
 
       rowIndex.getAndIncrement();
     });
