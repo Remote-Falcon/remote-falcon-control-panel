@@ -67,6 +67,7 @@ input PreferenceInput {
     pageIconUrl: String
     showOnMap: Boolean
     selfHostedRedirectUrl: String
+    blockedViewerIps: [String]
 }
 
 input SequenceInput {

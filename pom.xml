@@ -146,7 +146,7 @@
         <dependency>
             <groupId>com.github.Remote-Falcon</groupId>
             <artifactId>remote-falcon-library</artifactId>
-            <version>213a53bdbc</version>
+            <version>30-the-ability-to-block-an-ip-address-37186546e3-1</version>
         </dependency>
 
         <!--TESTING-->

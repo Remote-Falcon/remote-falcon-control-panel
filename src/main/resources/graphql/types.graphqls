@@ -64,6 +64,7 @@ type Preference {
     pageIconUrl: String
     showOnMap: Boolean
     selfHostedRedirectUrl: String
+    blockedViewerIps: [String]
 }
 
 type Sequence {

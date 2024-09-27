@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Set;
 
 @Builder
 @Data
@@ -22,6 +23,7 @@ public class DashboardStatsResponse {
     private Long date;
     private Integer total;
     private Integer unique;
+    private Set<String> viewerIps;
     private List<SequenceStat> sequences;
   }
 
