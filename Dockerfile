@@ -12,4 +12,4 @@ ENV OTEL_OPTS=${OTEL_OPTS}
 
 ADD 'https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar' /usr/app/opentelemetry-javaagent.jar
 
-ENTRYPOINT exec java $JAVA_OPTS $OTEL_OPTS -XX:FlightRecorderOptions=stackdepth=256 -jar /usr/app/remote-falcon-control-panel.jar
+ENTRYPOINT exec java $JAVA_OPTS $OTEL_OPTS -XX:FlightRecorderOptions=stackdepth=256 -XX:MaxRAMPercentage=75.0 -jar /usr/app/remote-falcon-control-panel.jar
