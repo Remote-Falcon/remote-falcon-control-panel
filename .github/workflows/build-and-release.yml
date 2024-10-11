@@ -41,11 +41,7 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY }}/${{ steps.repository_string.outputs.lowercase }}:${{ github.sha }}
           build-args: |
-            OTEL_OPTS=-javaagent:/usr/app/grafana-opentelemetry-java.jar
-            OTEL_EXPORTER_OTLP_ENDPOINT=http://grafana-k8s-monitoring-alloy.remote-falcon-grafana.svc.cluster.local:4317
-            OTEL_EXPORTER_OTLP_PROTOCOL=grpc
-            OTEL_SERVICE_NAME=remote-falcon-control-panel
-            OTEL_RESOURCE_ATTRIBUTES=deployment.environment=production
+            OTEL_OPTS=
   release-production:
     name: Release Production
     environment: prod
@@ -83,7 +79,7 @@ jobs:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Save DigitalOcean kubeconfig
-        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 4fee5fb4-939b-4d7a-8eb0-1b31115a74dc
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 9badee22-1583-464e-8117-a7090179f151
 
       - name: Kubectl apply
         run: kubectl apply -f ./k8s/manifest.yml
