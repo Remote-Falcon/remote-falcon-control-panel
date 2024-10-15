@@ -19,10 +19,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -299,7 +297,8 @@ public class GraphQLMutationService {
     public Boolean updateSequences(List<Sequence> sequences) {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {
-            show.get().setSequences(sequences);
+            Set<Sequence> sequencesSet = new HashSet<>(sequences);
+            show.get().setSequences(sequencesSet.stream().toList());
             this.showRepository.save(show.get());
             return true;
         }
@@ -388,8 +387,9 @@ public class GraphQLMutationService {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {
             show.get().setVotes(new ArrayList<>());
-            show.get().setSequences(show.get().getSequences().stream()
-                    .peek(sequence -> sequence.setVisibilityCount(0)).toList());
+            Set<Sequence> sequenceSet = show.get().getSequences().stream()
+                    .peek(sequence -> sequence.setVisibilityCount(0)).collect(Collectors.toSet());
+            show.get().setSequences(sequenceSet.stream().toList());
             show.get().setSequenceGroups(show.get().getSequenceGroups().stream()
                     .peek(sequenceGroup -> sequenceGroup.setVisibilityCount(0)).toList());
             this.showRepository.save(show.get());
@@ -412,8 +412,9 @@ public class GraphQLMutationService {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {
             show.get().setRequests(new ArrayList<>());
-            show.get().setSequences(show.get().getSequences().stream()
-                    .peek(sequence -> sequence.setVisibilityCount(0)).toList());
+            Set<Sequence> sequenceSet = show.get().getSequences().stream()
+                    .peek(sequence -> sequence.setVisibilityCount(0)).collect(Collectors.toSet());
+            show.get().setSequences(sequenceSet.stream().toList());
             show.get().setSequenceGroups(show.get().getSequenceGroups().stream()
                     .peek(sequenceGroup -> sequenceGroup.setVisibilityCount(0)).toList());
             this.showRepository.save(show.get());
