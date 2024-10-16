@@ -27,3 +27,9 @@ management:
 
 sendgrid:
   mail-from: "noreply@remotefalcon.com"
+
+logging:
+  level:
+    org:
+      springframework:
+        graphql: OFF #Turn off logging for Spring GraphQL
