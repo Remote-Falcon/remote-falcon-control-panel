@@ -383,6 +383,38 @@ public class GraphQLMutationService {
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
     }
 
+    public Boolean purgeStats() {
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        if(show.isPresent()) {
+            LocalDateTime purgeStatsDate = LocalDateTime.now().minusMonths(18);
+            List<Stat.Page> pageStats = show.get().getStats().getPage()
+                    .stream()
+                    .filter(stat -> stat.getDateTime().isAfter(purgeStatsDate))
+                    .toList();
+            List<Stat.Jukebox> jukeboxStats = show.get().getStats().getJukebox()
+                    .stream()
+                    .filter(stat -> stat.getDateTime().isAfter(purgeStatsDate))
+                    .toList();
+            List<Stat.Voting> votingStats = show.get().getStats().getVoting()
+                    .stream()
+                    .filter(stat -> stat.getDateTime().isAfter(purgeStatsDate))
+                    .toList();
+            List<Stat.VotingWin> votingWinStats = show.get().getStats().getVotingWin()
+                    .stream()
+                    .filter(stat -> stat.getDateTime().isAfter(purgeStatsDate))
+                    .toList();
+            show.get().setStats(Stat.builder()
+                    .page(pageStats)
+                    .jukebox(jukeboxStats)
+                    .voting(votingStats)
+                    .votingWin(votingWinStats)
+                    .build());
+            this.showRepository.save(show.get());
+            return true;
+        }
+        throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
+    }
+
     public Boolean resetAllVotes() {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {

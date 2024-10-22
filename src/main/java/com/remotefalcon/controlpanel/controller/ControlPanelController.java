@@ -19,4 +19,9 @@ public class ControlPanelController {
   public ResponseEntity<List<GitHubIssueResponse>> gitHubIssues() {
     return this.controlPanelService.gitHubIssues();
   }
+
+  @GetMapping(value = "/controlPanel/getJwt")
+  public ResponseEntity<String> getJwt() {
+    return this.controlPanelService.getJwt();
+  }
 }

@@ -145,6 +145,12 @@ public class GraphQLController {
         return this.graphQLMutationService.deleteNowPlaying();
     }
 
+    @MutationMapping
+    @RequiresAccess
+    public Boolean purgeStats() {
+        return this.graphQLMutationService.purgeStats();
+    }
+
 
     /*******
      Queries
@@ -168,7 +174,7 @@ public class GraphQLController {
     @QueryMapping
     @RequiresAccess()
     public DashboardStatsResponse dashboardStats(@Argument Long startDate, @Argument Long endDate, @Argument String timezone) {
-        return dashboardService.dashboardStats(startDate, endDate, timezone, true);
+        return dashboardService.dashboardStats(startDate, endDate, true);
     }
 
     @QueryMapping
