@@ -174,7 +174,7 @@ public class GraphQLController {
     @QueryMapping
     @RequiresAccess()
     public DashboardStatsResponse dashboardStats(@Argument Long startDate, @Argument Long endDate, @Argument String timezone) {
-        return dashboardService.dashboardStats(startDate, endDate, true);
+        return dashboardService.dashboardStats(startDate, endDate, timezone, true);
     }
 
     @QueryMapping

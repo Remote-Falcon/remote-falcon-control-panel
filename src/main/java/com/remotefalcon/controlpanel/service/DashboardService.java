@@ -29,23 +29,23 @@ public class DashboardService {
   private final ExcelUtil excelUtil;
   private final ShowRepository showRepository;
 
-  public DashboardStatsResponse dashboardStats(Long startDate, Long endDate, Boolean fillDays) {
+  public DashboardStatsResponse dashboardStats(Long startDate, Long endDate, String timezone, Boolean fillDays) {
     TokenDTO tokenDTO = this.jwtUtil.getJwtPayload();
     Optional<Show> show = this.showRepository.findByShowToken(tokenDTO.getShowToken());
     if(show.isEmpty()) {
       throw new RuntimeException(StatusResponse.SHOW_NOT_FOUND.name());
     }
 
-    ZonedDateTime startDateAtUTC = ZonedDateTime.ofInstant(Instant.ofEpochMilli(startDate), ZoneId.of("UTC"));
-    ZonedDateTime endDateAtUTC = ZonedDateTime.ofInstant(Instant.ofEpochMilli(endDate), ZoneId.of("UTC"));
+    ZonedDateTime startDateAtZone = ZonedDateTime.ofInstant(Instant.ofEpochMilli(startDate), ZoneId.of(timezone));
+    ZonedDateTime endDateAtZone = ZonedDateTime.ofInstant(Instant.ofEpochMilli(endDate), ZoneId.of(timezone));
 
-    List<DashboardStatsResponse.Stat> pageStats = this.buildPageStats(startDateAtUTC, endDateAtUTC, show.get(), fillDays);
-    List<DashboardStatsResponse.Stat> jukeboxStatsByDate = this.buildJukeboxStatsByDate(startDateAtUTC, endDateAtUTC, show.get(), fillDays);
-    DashboardStatsResponse.Stat jukeboxStatsBySequence = this.buildJukeboxStatsBySequence(startDateAtUTC, endDateAtUTC, show.get());
-    List<DashboardStatsResponse.Stat> voteStatsByDate = this.buildVoteStatsByDate(startDateAtUTC, endDateAtUTC, show.get(), fillDays);
-    DashboardStatsResponse.Stat voteStatsBySequence = this.buildVoteStatsBySequence(startDateAtUTC, endDateAtUTC, show.get());
-    List<DashboardStatsResponse.Stat> voteWinStatsByDate = this.buildVoteWinStatsByDate(startDateAtUTC, endDateAtUTC, show.get(), fillDays);
-    DashboardStatsResponse.Stat voteWinStatsBySequence = this.buildVoteWinStatsBySequence(startDateAtUTC, endDateAtUTC, show.get());
+    List<DashboardStatsResponse.Stat> pageStats = this.buildPageStats(startDateAtZone, endDateAtZone, timezone, show.get(), fillDays);
+    List<DashboardStatsResponse.Stat> jukeboxStatsByDate = this.buildJukeboxStatsByDate(startDateAtZone, endDateAtZone, timezone, show.get(), fillDays);
+    DashboardStatsResponse.Stat jukeboxStatsBySequence = this.buildJukeboxStatsBySequence(startDateAtZone, endDateAtZone, show.get());
+    List<DashboardStatsResponse.Stat> voteStatsByDate = this.buildVoteStatsByDate(startDateAtZone, endDateAtZone, timezone, show.get(), fillDays);
+    DashboardStatsResponse.Stat voteStatsBySequence = this.buildVoteStatsBySequence(startDateAtZone, endDateAtZone, show.get());
+    List<DashboardStatsResponse.Stat> voteWinStatsByDate = this.buildVoteWinStatsByDate(startDateAtZone, endDateAtZone, timezone, show.get(), fillDays);
+    DashboardStatsResponse.Stat voteWinStatsBySequence = this.buildVoteWinStatsBySequence(startDateAtZone, endDateAtZone, show.get());
 
     return DashboardStatsResponse.builder()
             .page(pageStats)
@@ -88,14 +88,14 @@ public class DashboardService {
   }
 
   public ResponseEntity<ByteArrayResource> downloadStatsToExcel(String timezone) {
-    DashboardStatsResponse dashboardStats = this.dashboardStats(21600000L, 4102380000000L, false);
+    DashboardStatsResponse dashboardStats = this.dashboardStats(21600000L, 4102380000000L, timezone, false);
     if(dashboardStats != null) {
       return excelUtil.generateDashboardExcel(dashboardStats, timezone);
     }
     return ResponseEntity.status(204).build();
   }
 
-  private List<DashboardStatsResponse.Stat> buildPageStats(ZonedDateTime startDateAtZone, ZonedDateTime endDateAtZone, Show show, Boolean fillDays) {
+  private List<DashboardStatsResponse.Stat> buildPageStats(ZonedDateTime startDateAtZone, ZonedDateTime endDateAtZone, String timezone, Show show, Boolean fillDays) {
     List<DashboardStatsResponse.Stat> pageStats = new ArrayList<>();
     if(show.getStats() == null) {
       return pageStats;
@@ -104,14 +104,14 @@ public class DashboardService {
             .stream()
             .filter(stat -> stat.getDateTime().isAfter(startDateAtZone.toLocalDateTime()))
             .filter(stat -> stat.getDateTime().isBefore(endDateAtZone.toLocalDateTime()))
-            .collect(Collectors.groupingBy(stat -> stat.getDateTime().toLocalDate()));
+            .collect(Collectors.groupingBy(stat -> stat.getDateTime().atZone(ZoneId.of("UTC")).toInstant().atZone(ZoneId.of(timezone)).toLocalDate()));
 
     if(fillDays) {
       this.fillStatDateGaps(startDateAtZone, endDateAtZone, pageStatsGroupedByDate);
     }
 
     pageStatsGroupedByDate.forEach((date, stat) -> pageStats.add(DashboardStatsResponse.Stat.builder()
-            .date(ZonedDateTime.of(date, date.atStartOfDay().toLocalTime(), ZoneId.of("UTC")).toInstant().toEpochMilli())
+            .date(ZonedDateTime.of(date, date.atStartOfDay().toLocalTime(), ZoneId.of(timezone)).toInstant().toEpochMilli())
             .total(stat.size())
             .unique(stat.stream().collect(Collectors.groupingBy(Stat.Page::getIp)).size())
             .viewerIps(stat.stream().map(Stat.Page::getIp).collect(Collectors.toSet()))
@@ -122,7 +122,7 @@ public class DashboardService {
     return pageStats;
   }
 
-  private List<DashboardStatsResponse.Stat> buildJukeboxStatsByDate(ZonedDateTime startDateAtZone, ZonedDateTime endDateAtZone, Show show, Boolean fillDays) {
+  private List<DashboardStatsResponse.Stat> buildJukeboxStatsByDate(ZonedDateTime startDateAtZone, ZonedDateTime endDateAtZone, String timezone, Show show, Boolean fillDays) {
     List<DashboardStatsResponse.Stat> jukeboxStats = new ArrayList<>();
     if(show.getStats() == null) {
       return jukeboxStats;
@@ -131,7 +131,7 @@ public class DashboardService {
             .stream()
             .filter(stat -> stat.getDateTime().isAfter(startDateAtZone.toLocalDateTime()))
             .filter(stat -> stat.getDateTime().isBefore(endDateAtZone.toLocalDateTime()))
-            .collect(Collectors.groupingBy(stat -> stat.getDateTime().toLocalDate()));
+            .collect(Collectors.groupingBy(stat -> stat.getDateTime().atZone(ZoneId.of("UTC")).toInstant().atZone(ZoneId.of(timezone)).toLocalDate()));
 
     if(fillDays) {
       this.fillStatDateGaps(startDateAtZone, endDateAtZone, jukeboxStatsGroupedByDate);
@@ -149,7 +149,7 @@ public class DashboardService {
               .sequences(sequences.stream()
                       .sorted(Comparator.comparing(DashboardStatsResponse.SequenceStat::getTotal).reversed())
                       .toList())
-              .date(ZonedDateTime.of(date, date.atStartOfDay().toLocalTime(), ZoneId.of("UTC")).toInstant().toEpochMilli())
+              .date(ZonedDateTime.of(date, date.atStartOfDay().toLocalTime(), ZoneId.of(timezone)).toInstant().toEpochMilli())
               .total(stat.size())
               .build());
     });
@@ -184,7 +184,7 @@ public class DashboardService {
             .build();
   }
 
-  private List<DashboardStatsResponse.Stat> buildVoteStatsByDate(ZonedDateTime startDateAtZone, ZonedDateTime endDateAtZone, Show show, Boolean fillDays) {
+  private List<DashboardStatsResponse.Stat> buildVoteStatsByDate(ZonedDateTime startDateAtZone, ZonedDateTime endDateAtZone, String timezone, Show show, Boolean fillDays) {
     List<DashboardStatsResponse.Stat> votingStats = new ArrayList<>();
     if(show.getStats() == null) {
       return votingStats;
@@ -193,7 +193,7 @@ public class DashboardService {
             .stream()
             .filter(stat -> stat.getDateTime().isAfter(startDateAtZone.toLocalDateTime()))
             .filter(stat -> stat.getDateTime().isBefore(endDateAtZone.toLocalDateTime()))
-            .collect(Collectors.groupingBy(stat -> stat.getDateTime().toLocalDate()));
+            .collect(Collectors.groupingBy(stat -> stat.getDateTime().atZone(ZoneId.of("UTC")).toInstant().atZone(ZoneId.of(timezone)).toLocalDate()));
 
     if(fillDays) {
       this.fillStatDateGaps(startDateAtZone, endDateAtZone, votingStatsGroupedByDate);
@@ -211,7 +211,7 @@ public class DashboardService {
               .sequences(sequences.stream()
                       .sorted(Comparator.comparing(DashboardStatsResponse.SequenceStat::getTotal).reversed())
                       .toList())
-              .date(ZonedDateTime.of(date, date.atStartOfDay().toLocalTime(), ZoneId.of("UTC")).toInstant().toEpochMilli())
+              .date(ZonedDateTime.of(date, date.atStartOfDay().toLocalTime(), ZoneId.of(timezone)).toInstant().toEpochMilli())
               .total(stat.size())
               .build());
     });
@@ -246,7 +246,7 @@ public class DashboardService {
             .build();
   }
 
-  private List<DashboardStatsResponse.Stat> buildVoteWinStatsByDate(ZonedDateTime startDateAtZone, ZonedDateTime endDateAtZone, Show show, Boolean fillDays) {
+  private List<DashboardStatsResponse.Stat> buildVoteWinStatsByDate(ZonedDateTime startDateAtZone, ZonedDateTime endDateAtZone, String timezone, Show show, Boolean fillDays) {
     List<DashboardStatsResponse.Stat> votingWinStats = new ArrayList<>();
     if(show.getStats() == null) {
       return votingWinStats;
@@ -256,7 +256,7 @@ public class DashboardService {
             .sorted(Comparator.comparing(Stat.VotingWin::getDateTime))
             .filter(stat -> stat.getDateTime().isAfter(startDateAtZone.toLocalDateTime()))
             .filter(stat -> stat.getDateTime().isBefore(endDateAtZone.toLocalDateTime()))
-            .collect(Collectors.groupingBy(stat -> stat.getDateTime().toLocalDate()));
+            .collect(Collectors.groupingBy(stat -> stat.getDateTime().atZone(ZoneId.of("UTC")).toInstant().atZone(ZoneId.of(timezone)).toLocalDate()));
 
     if(fillDays) {
       this.fillStatDateGaps(startDateAtZone, endDateAtZone, votingWinStatsGroupedByDate);
@@ -274,7 +274,7 @@ public class DashboardService {
               .sequences(sequences.stream()
                       .sorted(Comparator.comparing(DashboardStatsResponse.SequenceStat::getTotal).reversed())
                       .toList())
-              .date(ZonedDateTime.of(date, date.atStartOfDay().toLocalTime(), ZoneId.of("UTC")).toInstant().toEpochMilli())
+              .date(ZonedDateTime.of(date, date.atStartOfDay().toLocalTime(), ZoneId.of(timezone)).toInstant().toEpochMilli())
               .total(stat.size())
               .build());
     });
