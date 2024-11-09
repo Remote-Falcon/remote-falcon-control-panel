@@ -11,4 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class DownloadStatsToExcelRequest {
   private String timezone;
+  private Long dateFilterStart;
+  private Long dateFilterEnd;
 }

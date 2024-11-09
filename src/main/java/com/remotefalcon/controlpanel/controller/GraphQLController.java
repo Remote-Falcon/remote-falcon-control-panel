@@ -151,6 +151,12 @@ public class GraphQLController {
         return this.graphQLMutationService.purgeStats();
     }
 
+    @MutationMapping
+    @RequiresAccess
+    public Boolean deleteStatsWithinRange(@Argument Long startDate, @Argument Long endDate, @Argument String timezone) {
+        return this.graphQLMutationService.deleteStatsWithinRange(startDate, endDate, timezone);
+    }
+
 
     /*******
      Queries
@@ -174,7 +180,7 @@ public class GraphQLController {
     @QueryMapping
     @RequiresAccess()
     public DashboardStatsResponse dashboardStats(@Argument Long startDate, @Argument Long endDate, @Argument String timezone) {
-        return dashboardService.dashboardStats(startDate, endDate, timezone, true);
+        return dashboardService.dashboardStats(startDate, endDate, timezone);
     }
 
     @QueryMapping

@@ -18,7 +18,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -387,32 +390,34 @@ public class GraphQLMutationService {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {
             LocalDateTime purgeStatsDate = LocalDateTime.now().minusMonths(18);
-            List<Stat.Page> pageStats = show.get().getStats().getPage()
-                    .stream()
-                    .filter(stat -> stat.getDateTime().isAfter(purgeStatsDate))
-                    .toList();
-            List<Stat.Jukebox> jukeboxStats = show.get().getStats().getJukebox()
-                    .stream()
-                    .filter(stat -> stat.getDateTime().isAfter(purgeStatsDate))
-                    .toList();
-            List<Stat.Voting> votingStats = show.get().getStats().getVoting()
-                    .stream()
-                    .filter(stat -> stat.getDateTime().isAfter(purgeStatsDate))
-                    .toList();
-            List<Stat.VotingWin> votingWinStats = show.get().getStats().getVotingWin()
-                    .stream()
-                    .filter(stat -> stat.getDateTime().isAfter(purgeStatsDate))
-                    .toList();
-            show.get().setStats(Stat.builder()
-                    .page(pageStats)
-                    .jukebox(jukeboxStats)
-                    .voting(votingStats)
-                    .votingWin(votingWinStats)
-                    .build());
+
+            show.get().getStats().getPage().removeIf(stat -> stat.getDateTime().isBefore(purgeStatsDate));
+            show.get().getStats().getJukebox().removeIf(stat -> stat.getDateTime().isBefore(purgeStatsDate));
+            show.get().getStats().getVoting().removeIf(stat -> stat.getDateTime().isBefore(purgeStatsDate));
+            show.get().getStats().getVotingWin().removeIf(stat -> stat.getDateTime().isBefore(purgeStatsDate));
+
             this.showRepository.save(show.get());
             return true;
         }
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
+    }
+
+    public Boolean deleteStatsWithinRange(Long startDate, Long endDate, String timezone) {
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        if(show.isEmpty()) {
+            throw new RuntimeException(StatusResponse.SHOW_NOT_FOUND.name());
+        }
+
+        ZonedDateTime startDateAtZone = ZonedDateTime.ofInstant(Instant.ofEpochMilli(startDate), ZoneId.of(timezone));
+        ZonedDateTime endDateAtZone = ZonedDateTime.ofInstant(Instant.ofEpochMilli(endDate), ZoneId.of(timezone));
+
+        show.get().getStats().getPage().removeIf(stat -> stat.getDateTime().isAfter(startDateAtZone.toLocalDateTime()) && stat.getDateTime().isBefore(endDateAtZone.toLocalDateTime()));
+        show.get().getStats().getJukebox().removeIf(stat -> stat.getDateTime().isAfter(startDateAtZone.toLocalDateTime()) && stat.getDateTime().isBefore(endDateAtZone.toLocalDateTime()));
+        show.get().getStats().getVoting().removeIf(stat -> stat.getDateTime().isAfter(startDateAtZone.toLocalDateTime()) && stat.getDateTime().isBefore(endDateAtZone.toLocalDateTime()));
+        show.get().getStats().getVotingWin().removeIf(stat -> stat.getDateTime().isAfter(startDateAtZone.toLocalDateTime()) && stat.getDateTime().isBefore(endDateAtZone.toLocalDateTime()));
+
+        this.showRepository.save(show.get());
+        return true;
     }
 
     public Boolean resetAllVotes() {
