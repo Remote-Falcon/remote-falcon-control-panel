@@ -18,6 +18,6 @@ public class DashboardController {
   @PostMapping(value = "/controlPanel/downloadStatsToExcel")
   @RequiresAccess
   public ResponseEntity<ByteArrayResource> downloadStatsToExcel(@RequestBody DownloadStatsToExcelRequest downloadStatsToExcelRequest) {
-    return this.dashboardService.downloadStatsToExcel(downloadStatsToExcelRequest.getTimezone());
+    return this.dashboardService.downloadStatsToExcel(downloadStatsToExcelRequest);
   }
 }

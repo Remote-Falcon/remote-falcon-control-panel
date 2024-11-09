@@ -20,4 +20,5 @@ type Mutation {
     adminUpdateShow(show: ShowInput!): Boolean
     deleteNowPlaying: Boolean
     purgeStats: Boolean
+    deleteStatsWithinRange(startDate: Long!, endDate: Long!, timezone: String = "America/Chicago"): Boolean
 }
