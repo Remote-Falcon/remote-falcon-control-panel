@@ -204,6 +204,11 @@ public class GraphQLMutationService {
     public Boolean requestApiAccess() {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {
+            if(show.get().getApiAccess() == null) {
+                show.get().setApiAccess(ApiAccess.builder()
+                        .apiAccessActive(false)
+                        .build());
+            }
             if(show.get().getApiAccess().getApiAccessActive()) {
                 throw new RuntimeException(StatusResponse.API_ACCESS_REQUESTED.name());
             }
