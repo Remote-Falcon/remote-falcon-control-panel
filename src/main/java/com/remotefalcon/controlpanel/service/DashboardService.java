@@ -380,6 +380,7 @@ public class DashboardService {
             .sum();
   }
 
+  @SuppressWarnings("unchecked")
   private <V> void fillStatDateGaps(ZonedDateTime startDateAtZone, ZonedDateTime endDateAtZone, Map<LocalDate, V> statMap) {
     List<LocalDate> datesInRange = startDateAtZone.toLocalDate().datesUntil(endDateAtZone.toLocalDate()).toList();
     datesInRange.forEach(date -> {
