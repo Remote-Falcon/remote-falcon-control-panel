@@ -1,26 +1,36 @@
 package com.remotefalcon.controlpanel.service;
 
-import com.remotefalcon.controlpanel.request.DownloadStatsToExcelRequest;
-import com.remotefalcon.library.documents.Show;
-import com.remotefalcon.library.models.ActiveViewer;
-import com.remotefalcon.library.models.Stat;
-import com.remotefalcon.controlpanel.dto.TokenDTO;
-import com.remotefalcon.library.enums.StatusResponse;
-import com.remotefalcon.controlpanel.repository.ShowRepository;
-import com.remotefalcon.controlpanel.response.dashboard.DashboardLiveStatsResponse;
-import com.remotefalcon.controlpanel.response.dashboard.DashboardStatsResponse;
-import com.remotefalcon.controlpanel.util.AuthUtil;
-import com.remotefalcon.controlpanel.util.ExcelUtil;
-import com.remotefalcon.library.models.Vote;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.time.*;
-import java.util.*;
-import java.util.stream.Collectors;
+import com.remotefalcon.controlpanel.dto.TokenDTO;
+import com.remotefalcon.controlpanel.repository.ShowRepository;
+import com.remotefalcon.controlpanel.request.DownloadStatsToExcelRequest;
+import com.remotefalcon.controlpanel.response.dashboard.DashboardLiveStatsResponse;
+import com.remotefalcon.controlpanel.response.dashboard.DashboardStatsResponse;
+import com.remotefalcon.controlpanel.util.AuthUtil;
+import com.remotefalcon.controlpanel.util.ExcelUtil;
+import com.remotefalcon.library.documents.Show;
+import com.remotefalcon.library.enums.StatusResponse;
+import com.remotefalcon.library.models.ActiveViewer;
+import com.remotefalcon.library.models.Stat;
+import com.remotefalcon.library.models.Vote;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +48,7 @@ public class DashboardService {
     }
 
     ZonedDateTime startDateAtZone = ZonedDateTime.ofInstant(Instant.ofEpochMilli(startDate), ZoneId.of(timezone));
-    ZonedDateTime endDateAtZone = ZonedDateTime.ofInstant(Instant.ofEpochMilli(endDate), ZoneId.of(timezone));
+    ZonedDateTime endDateAtZone = ZonedDateTime.ofInstant(Instant.ofEpochMilli(endDate), ZoneId.of(timezone)).plusDays(2);
 
     List<DashboardStatsResponse.Stat> pageStats = this.buildPageStats(startDateAtZone, endDateAtZone, timezone, show.get());
     List<DashboardStatsResponse.Stat> jukeboxStatsByDate = this.buildJukeboxStatsByDate(startDateAtZone, endDateAtZone, timezone, show.get());
