@@ -131,8 +131,8 @@ type DashboardStats {
 }
 
 type DashboardLiveStats {
-    activeViewers: Int
-    totalViewers: Int
+    playingNow: String
+    playingNext: String
     currentRequests: Int
     totalRequests: Int
     currentVotes: Int

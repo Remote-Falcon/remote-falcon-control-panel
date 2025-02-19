@@ -5,13 +5,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import com.remotefalcon.library.models.*;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.util.StringUtil;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -25,9 +24,6 @@ import com.remotefalcon.controlpanel.util.AuthUtil;
 import com.remotefalcon.controlpanel.util.ExcelUtil;
 import com.remotefalcon.library.documents.Show;
 import com.remotefalcon.library.enums.StatusResponse;
-import com.remotefalcon.library.models.ActiveViewer;
-import com.remotefalcon.library.models.Stat;
-import com.remotefalcon.library.models.Vote;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -76,26 +72,40 @@ public class DashboardService {
       throw new RuntimeException(StatusResponse.SHOW_NOT_FOUND.name());
     }
 
+    Show existingShow = show.get();
+
     ZonedDateTime startDateAtZone = ZonedDateTime.ofInstant(Instant.ofEpochMilli(startDate), ZoneId.of(timezone));
     ZonedDateTime endDateAtZone = ZonedDateTime.ofInstant(Instant.ofEpochMilli(endDate), ZoneId.of(timezone));
 
-    List<ActiveViewer> filteredActiveViewers = new ArrayList<>();
-    if(show.get().getActiveViewers() != null) {
-      filteredActiveViewers = show.get().getActiveViewers().stream()
-              .filter(activeViewer -> activeViewer.getVisitDateTime().isAfter(LocalDateTime.now().minusMinutes(1)))
-              .toList();
-    }
-    show.get().setActiveViewers(filteredActiveViewers);
-    this.showRepository.save(show.get());
-
     return DashboardLiveStatsResponse.builder()
-            .activeViewers(filteredActiveViewers.size())
-            .totalViewers(this.buildTotalViewersLiveStat(startDateAtZone, endDateAtZone, timezone, show.get(), false))
             .currentRequests(show.get().getRequests() != null ? show.get().getRequests().size() : 0)
             .totalRequests(this.buildTotalRequestsLiveStat(startDateAtZone, endDateAtZone, timezone, show.get(), false))
             .currentVotes(show.get().getVotes() != null ? show.get().getVotes().stream().mapToInt(Vote::getVotes).sum() : 0)
             .totalVotes(this.buildTotalVotesLiveStat(startDateAtZone, endDateAtZone, timezone, show.get(), false))
+            .playingNow(getPlayingNow(existingShow))
+            .playingNext(getPlayingNext(existingShow))
             .build();
+  }
+
+  private String getPlayingNow(Show show) {
+    Optional<Sequence> playingNowSequence = show.getSequences().stream()
+            .filter(sequence -> StringUtils.equalsIgnoreCase(sequence.getName(), show.getPlayingNow()))
+            .findFirst();
+    return playingNowSequence.map(Sequence::getDisplayName).orElse(show.getPlayingNow());
+  }
+
+  private String getPlayingNext(Show show) {
+    Optional<Request> nextRequest = show.getRequests().stream()
+            .min(Comparator.comparing(Request::getPosition));
+
+    if(nextRequest.isPresent()) {
+      return nextRequest.get().getSequence().getDisplayName();
+    }else {
+      Optional<Sequence> playingNextScheduledSequence = show.getSequences().stream()
+              .filter(sequence -> StringUtils.equalsIgnoreCase(sequence.getName(), show.getPlayingNextFromSchedule()))
+              .findFirst();
+      return playingNextScheduledSequence.map(Sequence::getDisplayName).orElse(show.getPlayingNextFromSchedule());
+    }
   }
 
   public ResponseEntity<ByteArrayResource> downloadStatsToExcel(DownloadStatsToExcelRequest downloadStatsToExcelRequest) {
@@ -115,6 +125,7 @@ public class DashboardService {
             .stream()
             .filter(stat -> stat.getDateTime().isAfter(startDateAtZone.toLocalDateTime()))
             .filter(stat -> stat.getDateTime().isBefore(endDateAtZone.toLocalDateTime()))
+            .filter(stat -> stat.getIp() != null)
             .collect(Collectors.groupingBy(stat -> stat.getDateTime().atZone(ZoneId.of("UTC")).toInstant().atZone(ZoneId.of(timezone)).toLocalDate()));
 
     this.fillStatDateGaps(startDateAtZone, endDateAtZone, pageStatsGroupedByDate);
