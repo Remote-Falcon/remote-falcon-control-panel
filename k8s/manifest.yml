@@ -78,6 +78,21 @@ spec:
             secretKeyRef:
               name: remote-falcon-control-panel
               key: client-header
+        - name: s3.endpoint
+          valueFrom:
+            secretKeyRef:
+              name: remote-falcon-control-panel
+              key: s3-endpoint
+        - name: s3.accessKey
+          valueFrom:
+            secretKeyRef:
+              name: remote-falcon-control-panel
+              key: s3-accessKey
+        - name: s3.secretKey
+          valueFrom:
+            secretKeyRef:
+              name: remote-falcon-control-panel
+              key: s3-secretKey
         startupProbe:
           httpGet:
             path: /remote-falcon-control-panel/actuator/health

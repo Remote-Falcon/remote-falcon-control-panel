@@ -1,8 +1,7 @@
 package com.remotefalcon.controlpanel.service;
 
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.remotefalcon.controlpanel.dto.TokenDTO;
-import com.remotefalcon.controlpanel.util.S3Client;
+import com.remotefalcon.controlpanel.model.S3Image;
+import com.remotefalcon.controlpanel.util.S3Util;
 import com.remotefalcon.controlpanel.repository.ShowRepository;
 import com.remotefalcon.controlpanel.response.GitHubIssueResponse;
 import com.remotefalcon.controlpanel.util.AuthUtil;
@@ -22,6 +21,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
@@ -37,7 +37,7 @@ public class ControlPanelService {
   private final ShowRepository showRepository;
   private final HttpServletRequest httpServletRequest;
 
-  private final S3Client s3Client;
+  private final S3Util s3Util;
 
   public ResponseEntity<List<GitHubIssueResponse>> gitHubIssues() {
     List<GitHubIssueResponse> ghIssue = this.gitHubWebClient.get()
@@ -88,10 +88,7 @@ public class ControlPanelService {
       return ResponseEntity.badRequest().body(imageValidation);
     }
 
-    File localFile = convertMultipartFileToFile(file);
-
-    s3Client.uploadFile(localFile, show.get().getShowSubdomain());
-
+    s3Util.uploadFile(file, show.get().getShowSubdomain());
     return ResponseEntity.ok(file.getOriginalFilename());
   }
 
@@ -102,13 +99,34 @@ public class ControlPanelService {
     return null;
   }
 
-  private File convertMultipartFileToFile(MultipartFile file) {
-    File convertedFile = new File(Objects.requireNonNull(file.getOriginalFilename()));
-    try {
-      Files.copy(file.getInputStream(), convertedFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+  public ResponseEntity<Boolean> downloadImage(String image) {
+    Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+    if(show.isEmpty()) {
+      throw new RuntimeException(StatusResponse.SHOW_NOT_FOUND.name());
     }
-    return convertedFile;
+
+    Boolean success = s3Util.downloadFile(image, show.get().getShowSubdomain());
+
+    return ResponseEntity.ok(success);
+  }
+
+  public ResponseEntity<String> deleteImage(String image) {
+    Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+    if(show.isEmpty()) {
+      throw new RuntimeException(StatusResponse.SHOW_NOT_FOUND.name());
+    }
+
+    s3Util.deleteFile(image, show.get().getShowSubdomain());
+
+    return ResponseEntity.ok(image);
+  }
+
+  public ResponseEntity<List<S3Image>> getImages() {
+    Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+    if(show.isEmpty()) {
+      throw new RuntimeException(StatusResponse.SHOW_NOT_FOUND.name());
+    }
+
+    return ResponseEntity.ok(s3Util.getImages(show.get().getShowSubdomain()));
   }
 }
