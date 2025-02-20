@@ -1,5 +1,7 @@
 package com.remotefalcon.controlpanel.service;
 
+import com.remotefalcon.controlpanel.model.S3Image;
+import com.remotefalcon.controlpanel.util.S3Util;
 import com.remotefalcon.controlpanel.repository.ShowRepository;
 import com.remotefalcon.controlpanel.response.GitHubIssueResponse;
 import com.remotefalcon.controlpanel.util.AuthUtil;
@@ -14,9 +16,16 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -27,6 +36,8 @@ public class ControlPanelService {
   private final AuthUtil authUtil;
   private final ShowRepository showRepository;
   private final HttpServletRequest httpServletRequest;
+
+  private final S3Util s3Util;
 
   public ResponseEntity<List<GitHubIssueResponse>> gitHubIssues() {
     List<GitHubIssueResponse> ghIssue = this.gitHubWebClient.get()
@@ -64,5 +75,58 @@ public class ControlPanelService {
       }
     }
     throw new RuntimeException(StatusResponse.UNAUTHORIZED.name());
+  }
+
+  public ResponseEntity<String> uploadImage(MultipartFile file) {
+    Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+    if(show.isEmpty()) {
+      throw new RuntimeException(StatusResponse.SHOW_NOT_FOUND.name());
+    }
+
+    String imageValidation = this.validateImage(file);
+    if(imageValidation != null) {
+      return ResponseEntity.badRequest().body(imageValidation);
+    }
+
+    s3Util.uploadFile(file, show.get().getShowSubdomain());
+    return ResponseEntity.ok(file.getOriginalFilename());
+  }
+
+  private String validateImage(MultipartFile file) {
+    if(!StringUtils.contains(file.getContentType(), "image")) {
+      return "File must be an image";
+    }
+    return null;
+  }
+
+  public ResponseEntity<Boolean> downloadImage(String image) {
+    Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+    if(show.isEmpty()) {
+      throw new RuntimeException(StatusResponse.SHOW_NOT_FOUND.name());
+    }
+
+    Boolean success = s3Util.downloadFile(image, show.get().getShowSubdomain());
+
+    return ResponseEntity.ok(success);
+  }
+
+  public ResponseEntity<String> deleteImage(String image) {
+    Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+    if(show.isEmpty()) {
+      throw new RuntimeException(StatusResponse.SHOW_NOT_FOUND.name());
+    }
+
+    s3Util.deleteFile(image, show.get().getShowSubdomain());
+
+    return ResponseEntity.ok(image);
+  }
+
+  public ResponseEntity<List<S3Image>> getImages() {
+    Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+    if(show.isEmpty()) {
+      throw new RuntimeException(StatusResponse.SHOW_NOT_FOUND.name());
+    }
+
+    return ResponseEntity.ok(s3Util.getImages(show.get().getShowSubdomain()));
   }
 }
