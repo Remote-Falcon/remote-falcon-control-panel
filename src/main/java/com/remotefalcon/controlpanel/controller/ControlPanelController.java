@@ -6,6 +6,7 @@ import com.remotefalcon.controlpanel.service.ControlPanelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -23,5 +24,11 @@ public class ControlPanelController {
   @GetMapping(value = "/controlPanel/getJwt")
   public ResponseEntity<String> getJwt() {
     return this.controlPanelService.getJwt();
+  }
+
+  @PostMapping(value = "/controlPanel/uploadImage")
+  @RequiresAccess
+  public ResponseEntity<String> uploadImage(@RequestParam("file") MultipartFile file) {
+    return this.controlPanelService.uploadImage(file);
   }
 }

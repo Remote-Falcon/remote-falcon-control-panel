@@ -137,6 +137,11 @@
             <version>5.0.6</version>
         </dependency>
         <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-s3</artifactId>
+            <version>1.12.663</version>
+        </dependency>
+        <dependency>
             <groupId>com.github.Remote-Falcon</groupId>
             <artifactId>remote-falcon-library</artifactId>
             <version>b5002e930a</version>
