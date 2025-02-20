@@ -43,16 +43,6 @@ spec:
           value: #{Env}#
         - name: auto-validate-email
           value: "false"
-        - name: spring.datasource.username
-          valueFrom:
-            secretKeyRef:
-              name: remote-falcon-control-panel
-              key: mysql-user
-        - name: spring.datasource.password
-          valueFrom:
-            secretKeyRef:
-              name: remote-falcon-control-panel
-              key: mysql-pass
         - name: spring.data.mongodb.uri
           valueFrom:
             secretKeyRef:
