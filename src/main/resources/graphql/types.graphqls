@@ -156,3 +156,9 @@ type ShowsOnAMap {
     showLatitude: Float
     showLongitude: Float
 }
+
+type Notification {
+    id: String
+    subject: String
+    message: String
+}

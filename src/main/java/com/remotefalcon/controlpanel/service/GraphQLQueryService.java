@@ -6,6 +6,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+import com.remotefalcon.controlpanel.repository.NotificationRepository;
+import com.remotefalcon.library.documents.Notification;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,7 @@ public class GraphQLQueryService {
     private final AuthUtil authUtil;
     private final ClientUtil clientUtil;
     private final ShowRepository showRepository;
+    private final NotificationRepository notificationRepository;
     private final HttpServletRequest httpServletRequest;
 
     public Show signIn() {
@@ -145,5 +148,9 @@ public class GraphQLQueryService {
     public Show getShowByShowSubdomain(String showSubdomain) {
         Optional<Show> show = this.showRepository.findByShowSubdomain(showSubdomain);
         return show.orElse(null);
+    }
+
+    public List<Notification> getNotifications() {
+        return this.notificationRepository.findAll();
     }
 }

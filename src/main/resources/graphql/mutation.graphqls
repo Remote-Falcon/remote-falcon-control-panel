@@ -21,4 +21,6 @@ type Mutation {
     deleteNowPlaying: Boolean
     purgeStats: Boolean
     deleteStatsWithinRange(startDate: Long!, endDate: Long!, timezone: String = "America/Chicago"): Boolean
+    createNotification(notification: NotificationInput!): Boolean
+    deleteNotification(id: String!): Boolean
 }

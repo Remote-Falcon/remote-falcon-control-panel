@@ -117,3 +117,8 @@ input PageInput {
     active: Boolean
     html: String
 }
+
+input NotificationInput {
+    subject: String
+    message: String
+}

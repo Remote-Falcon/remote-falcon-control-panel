@@ -1,9 +1,11 @@
 package com.remotefalcon.controlpanel.service;
 
+import com.remotefalcon.controlpanel.repository.NotificationRepository;
 import com.remotefalcon.controlpanel.repository.ShowRepository;
 import com.remotefalcon.controlpanel.util.AuthUtil;
 import com.remotefalcon.controlpanel.util.EmailUtil;
 import com.remotefalcon.controlpanel.util.RandomUtil;
+import com.remotefalcon.library.documents.Notification;
 import com.remotefalcon.library.documents.Show;
 import com.remotefalcon.library.enums.ShowRole;
 import com.remotefalcon.library.enums.StatusResponse;
@@ -31,6 +33,7 @@ public class GraphQLMutationService {
     private final EmailUtil emailUtil;
     private final AuthUtil authUtil;
     private final ShowRepository showRepository;
+    private final NotificationRepository notificationRepository;
     private final HttpServletRequest httpServletRequest;
 
     @Value("${auto-validate-email}")
@@ -282,7 +285,7 @@ public class GraphQLMutationService {
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
     }
 
-    public Boolean updatePages(List<Page> pages) {
+    public Boolean updatePages(List<ViewerPage> pages) {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {
             show.get().setPages(pages);
@@ -463,5 +466,15 @@ public class GraphQLMutationService {
             return true;
         }
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
+    }
+
+    public Boolean createNotification(Notification notification) {
+        this.notificationRepository.save(notification);
+        return true;
+    }
+
+    public Boolean deleteNotification(String id) {
+        this.notificationRepository.deleteById(id);
+        return true;
     }
 }
