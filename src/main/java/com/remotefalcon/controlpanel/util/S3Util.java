@@ -7,6 +7,7 @@ import com.remotefalcon.controlpanel.model.S3Image;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.Strings;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,8 +27,13 @@ public class S3Util {
     private final String bucketName = "remote-falcon-images";
     private final String cdnEndpoint = String.format("https://%s.nyc3.cdn.digitaloceanspaces.com", bucketName);
 
-    public void uploadFile(MultipartFile file, String showSubdomain) {
+    public ResponseEntity<String> uploadFile(MultipartFile file, String showSubdomain) {
         String path = String.format("%s/%s", showSubdomain, Objects.requireNonNull(file.getOriginalFilename()).toLowerCase());
+
+        List<S3ObjectSummary> objectSummaries = amazonS3Client.listObjectsV2(bucketName, showSubdomain).getObjectSummaries();
+        if(objectSummaries.size() >= 25) {
+            return ResponseEntity.badRequest().body("You have reached the maximum number of images");
+        }
 
         try {
             InputStream fileInputStream = file.getInputStream();
@@ -40,6 +46,7 @@ public class S3Util {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return ResponseEntity.ok(file.getOriginalFilename());
     }
 
     public Boolean downloadFile(String filename, String showSubdomain) {
@@ -72,12 +79,10 @@ public class S3Util {
         List<S3ObjectSummary> objectSummaries = amazonS3Client.listObjectsV2(bucketName, showSubdomain).getObjectSummaries();
         for(S3ObjectSummary objectSummary : objectSummaries) {
             String key = objectSummary.getKey();
-            if(key.endsWith(".jpg") || key.endsWith(".png") || key.endsWith(".jpeg")) {
-                s3Images.add(S3Image.builder()
-                        .path(String.format("%s/%s", cdnEndpoint, key))
-                        .name(Strings.split(key, '/')[1])
-                        .build());
-            }
+            s3Images.add(S3Image.builder()
+                    .path(String.format("%s/%s", cdnEndpoint, key))
+                    .name(Strings.split(key, '/')[1])
+                    .build());
         }
         return s3Images;
     }

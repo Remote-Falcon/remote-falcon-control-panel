@@ -88,8 +88,7 @@ public class ControlPanelService {
       return ResponseEntity.badRequest().body(imageValidation);
     }
 
-    s3Util.uploadFile(file, show.get().getShowSubdomain());
-    return ResponseEntity.ok(file.getOriginalFilename());
+    return s3Util.uploadFile(file, show.get().getShowSubdomain());
   }
 
   private String validateImage(MultipartFile file) {
