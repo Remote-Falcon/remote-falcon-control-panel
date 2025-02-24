@@ -166,7 +166,7 @@ type Notification {
 }
 
 type ShowNotification {
-    id: String
+    notification: Notification
     read: Boolean
     deleted: Boolean
 }

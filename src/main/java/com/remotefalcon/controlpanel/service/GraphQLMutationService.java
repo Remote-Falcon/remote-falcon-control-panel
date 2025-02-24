@@ -469,42 +469,32 @@ public class GraphQLMutationService {
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
     }
 
-    public Boolean markNotificationsAsRead(List<String> ids) {
+    public List<ShowNotification> markNotificationsAsRead(List<String> ids) {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {
             Show existingShow = show.get();
-            if(existingShow.getShowNotifications() == null) {
-                existingShow.setShowNotifications(new ArrayList<>());
-            }
-            ids.forEach(id -> {
-                if(existingShow.getShowNotifications().stream()
-                        .noneMatch(notification -> Objects.equals(notification.getId(), id))) {
-                    existingShow.getShowNotifications().add(ShowNotification.builder()
-                                    .id(id)
-                                    .read(true)
-                                    .deleted(false)
-                            .build());
-                    this.showRepository.save(existingShow);
+            ids.forEach(id -> existingShow.getShowNotifications().forEach(showNotification -> {
+                if(Objects.equals(showNotification.getNotification().getId(), id)) {
+                    showNotification.setRead(true);
                 }
-            });
-            return true;
+            }));
+            this.showRepository.save(existingShow);
+            return existingShow.getShowNotifications();
         }
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
     }
 
-    public Boolean deleteNotificationForUser(String id) {
+    public List<ShowNotification> deleteNotificationForUser(String id) {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {
             Show existingShow = show.get();
-            if(existingShow.getShowNotifications() == null) {
-                existingShow.setShowNotifications(new ArrayList<>());
-            }
-            existingShow.getShowNotifications().add(ShowNotification.builder()
-                        .id(id)
-                        .deleted(true)
-                    .build());
+            existingShow.getShowNotifications().forEach(showNotification -> {
+                if (Objects.equals(showNotification.getNotification().getId(), id)) {
+                    showNotification.setDeleted(true);
+                }
+            });
             this.showRepository.save(existingShow);
-            return true;
+            return existingShow.getShowNotifications();
         }
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
     }
