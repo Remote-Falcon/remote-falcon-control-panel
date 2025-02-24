@@ -86,7 +86,8 @@ public class GraphQLMutationService {
                         .build())
                 .emailVerified(this.autoValidateEmail)
                 .createdDate(LocalDateTime.now())
-                .expireDate(LocalDateTime.now().plusDays(90))
+                .lastLoginDate(LocalDateTime.now())
+                .expireDate(LocalDateTime.now().plusYears(2))
                 .showRole(ShowRole.USER)
                 .preferences(Preference.builder()
                         .viewerControlEnabled(false)
@@ -463,6 +464,46 @@ public class GraphQLMutationService {
             show.get().setSequenceGroups(show.get().getSequenceGroups().stream()
                     .peek(sequenceGroup -> sequenceGroup.setVisibilityCount(0)).toList());
             this.showRepository.save(show.get());
+            return true;
+        }
+        throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
+    }
+
+    public Boolean markNotificationsAsRead(List<String> ids) {
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        if(show.isPresent()) {
+            Show existingShow = show.get();
+            if(existingShow.getShowNotifications() == null) {
+                existingShow.setShowNotifications(new ArrayList<>());
+            }
+            ids.forEach(id -> {
+                if(existingShow.getShowNotifications().stream()
+                        .noneMatch(notification -> Objects.equals(notification.getId(), id))) {
+                    existingShow.getShowNotifications().add(ShowNotification.builder()
+                                    .id(id)
+                                    .read(true)
+                                    .deleted(false)
+                            .build());
+                    this.showRepository.save(existingShow);
+                }
+            });
+            return true;
+        }
+        throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
+    }
+
+    public Boolean deleteNotificationForUser(String id) {
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        if(show.isPresent()) {
+            Show existingShow = show.get();
+            if(existingShow.getShowNotifications() == null) {
+                existingShow.setShowNotifications(new ArrayList<>());
+            }
+            existingShow.getShowNotifications().add(ShowNotification.builder()
+                        .id(id)
+                        .deleted(true)
+                    .build());
+            this.showRepository.save(existingShow);
             return true;
         }
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());

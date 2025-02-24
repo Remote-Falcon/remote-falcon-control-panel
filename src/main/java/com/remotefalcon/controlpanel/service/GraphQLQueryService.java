@@ -56,7 +56,7 @@ public class GraphQLQueryService {
                     throw new RuntimeException(StatusResponse.EMAIL_NOT_VERIFIED.name());
                 }
                 show.setLastLoginDate(LocalDateTime.now());
-                show.setExpireDate(LocalDateTime.now().plusYears(1));
+                show.setExpireDate(LocalDateTime.now().plusYears(2));
                 show.setLastLoginIp(ipAddress);
                 this.checkFields(show);
                 this.showRepository.save(show);
