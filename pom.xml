@@ -145,6 +145,16 @@
             <groupId>com.github.Remote-Falcon</groupId>
             <artifactId>remote-falcon-library</artifactId>
             <version>74f357b6c4</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.quarkus</groupId>
+                    <artifactId>quarkus-mongodb-panache</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.quarkus</groupId>
+                    <artifactId>quarkus-smallrye-graphql</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!--TESTING-->
