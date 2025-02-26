@@ -6,6 +6,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+import com.remotefalcon.controlpanel.repository.NotificationRepository;
+import com.remotefalcon.library.documents.Notification;
+import com.remotefalcon.library.models.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,10 +20,6 @@ import com.remotefalcon.controlpanel.util.ClientUtil;
 import com.remotefalcon.library.documents.Show;
 import com.remotefalcon.library.enums.StatusResponse;
 import com.remotefalcon.library.enums.ViewerControlMode;
-import com.remotefalcon.library.models.PsaSequence;
-import com.remotefalcon.library.models.Request;
-import com.remotefalcon.library.models.Sequence;
-import com.remotefalcon.library.models.Stat;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +32,7 @@ public class GraphQLQueryService {
     private final AuthUtil authUtil;
     private final ClientUtil clientUtil;
     private final ShowRepository showRepository;
+    private final NotificationRepository notificationRepository;
     private final HttpServletRequest httpServletRequest;
 
     public Show signIn() {
@@ -53,7 +53,7 @@ public class GraphQLQueryService {
                     throw new RuntimeException(StatusResponse.EMAIL_NOT_VERIFIED.name());
                 }
                 show.setLastLoginDate(LocalDateTime.now());
-                show.setExpireDate(LocalDateTime.now().plusYears(1));
+                show.setExpireDate(LocalDateTime.now().plusYears(2));
                 show.setLastLoginIp(ipAddress);
                 this.checkFields(show);
                 this.showRepository.save(show);
@@ -145,5 +145,51 @@ public class GraphQLQueryService {
     public Show getShowByShowSubdomain(String showSubdomain) {
         Optional<Show> show = this.showRepository.findByShowSubdomain(showSubdomain);
         return show.orElse(null);
+    }
+
+    public List<ShowNotification> getNotifications() {
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        if(show.isPresent()) {
+            Show existingShow = show.get();
+            List<Notification> notifications = this.notificationRepository.findAll();
+            List<String> existingNotificationIds = notifications.stream().map(Notification::getId).toList();
+            List<ShowNotification> showNotifications = existingShow.getShowNotifications() == null ? new ArrayList<>() : existingShow.getShowNotifications();
+            List<ShowNotification> showNotificationsWithRemovedNotifications = new ArrayList<>();
+            if(showNotifications.isEmpty()) {
+                notifications.forEach(notification -> {
+                    showNotifications.add(ShowNotification.builder()
+                            .notification(notification)
+                            .read(false)
+                            .deleted(false)
+                            .build());
+                    showNotificationsWithRemovedNotifications.add(ShowNotification.builder()
+                            .notification(notification)
+                            .read(false)
+                            .deleted(false)
+                            .build());
+                });
+            }else {
+                List<String> existingShowNotificationIds = existingShow.getShowNotifications().stream().map(showNotification -> showNotification.getNotification().getId()).toList();
+                notifications.forEach(notification -> {
+                    if(existingShow.getShowNotifications() == null || !existingShowNotificationIds.contains(notification.getId())) {
+                        showNotifications.add(ShowNotification.builder()
+                                .notification(notification)
+                                .read(false)
+                                .deleted(false)
+                                .build());
+                    }
+                });
+                existingShow.getShowNotifications().forEach((showNotification) -> {
+                    if(existingNotificationIds.contains(showNotification.getNotification().getId())) {
+                        showNotificationsWithRemovedNotifications.add(showNotification);
+                    }
+                });
+            }
+            existingShow.setShowNotifications(showNotificationsWithRemovedNotifications);
+            this.showRepository.save(existingShow);
+
+            return showNotificationsWithRemovedNotifications.stream().filter(showNotification -> !showNotification.getDeleted()).toList();
+        }
+        throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
     }
 }

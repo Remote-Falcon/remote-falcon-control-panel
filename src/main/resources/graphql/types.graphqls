@@ -25,6 +25,8 @@ type Show {
     playingNow: String
     playingNext: String
 
+    showNotifications: [ShowNotification]
+
     serviceToken: String
 }
 
@@ -155,4 +157,16 @@ type ShowsOnAMap {
     showName: String
     showLatitude: Float
     showLongitude: Float
+}
+
+type Notification {
+    id: String
+    subject: String
+    message: String
+}
+
+type ShowNotification {
+    notification: Notification
+    read: Boolean
+    deleted: Boolean
 }
