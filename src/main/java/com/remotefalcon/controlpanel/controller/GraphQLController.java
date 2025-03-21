@@ -65,6 +65,12 @@ public class GraphQLController {
 
     @MutationMapping
     @RequiresAccess
+    public Boolean updateExpoPushToken(@Argument String expoPushToken) {
+        return this.graphQLMutationService.updateExpoPushToken(expoPushToken);
+    }
+
+    @MutationMapping
+    @RequiresAccess
     public Boolean requestApiAccess() {
         return this.graphQLMutationService.requestApiAccess();
     }

@@ -199,6 +199,19 @@ public class GraphQLMutationService {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {
             show.get().setUserProfile(userProfile);
+            if(show.get().getUserProfile().getExpoPushToken() != null) {
+                userProfile.setExpoPushToken(show.get().getUserProfile().getExpoPushToken());
+            }
+            this.showRepository.save(show.get());
+            return true;
+        }
+        throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
+    }
+
+    public Boolean updateExpoPushToken(String expoPushToken) {
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        if(show.isPresent()) {
+            show.get().getUserProfile().setExpoPushToken(expoPushToken);
             this.showRepository.save(show.get());
             return true;
         }

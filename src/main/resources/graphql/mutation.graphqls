@@ -25,4 +25,5 @@ type Mutation {
     deleteNotification(id: String!): Boolean
     markNotificationsAsRead(ids: [String]!): [ShowNotification]
     deleteNotificationForUser(id: String!): [ShowNotification]
+    updateExpoPushToken(expoPushToken: String!): Boolean
 }
