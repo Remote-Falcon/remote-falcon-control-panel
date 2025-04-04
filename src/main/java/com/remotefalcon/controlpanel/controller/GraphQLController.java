@@ -12,7 +12,6 @@ import com.remotefalcon.controlpanel.service.DashboardService;
 import com.remotefalcon.controlpanel.service.GraphQLMutationService;
 import com.remotefalcon.controlpanel.service.GraphQLQueryService;
 import lombok.RequiredArgsConstructor;
-import org.aspectj.weaver.ast.Not;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
@@ -167,14 +166,14 @@ public class GraphQLController {
 
     @MutationMapping
     @RequiresAccess
-    public List<ShowNotification> markNotificationsAsRead(@Argument List<String> ids) {
-        return this.graphQLMutationService.markNotificationsAsRead(ids);
+    public List<ShowNotification> markNotificationsAsRead(@Argument List<String> uuids) {
+        return this.graphQLMutationService.markNotificationsAsRead(uuids);
     }
 
     @MutationMapping
     @RequiresAccess
-    public List<ShowNotification> deleteNotificationForUser(@Argument String id) {
-        return this.graphQLMutationService.deleteNotificationForUser(id);
+    public List<ShowNotification> deleteNotificationForUser(@Argument String uuid) {
+        return this.graphQLMutationService.deleteNotificationForUser(uuid);
     }
 
     @MutationMapping
@@ -185,8 +184,14 @@ public class GraphQLController {
 
     @MutationMapping
     @RequiresAdminAccess
-    public Boolean deleteNotification(@Argument String id) {
-        return this.graphQLMutationService.deleteNotification(id);
+    public Boolean createNotificationForUser(@Argument Notification notification, @Argument String showSubdomain) {
+        return this.graphQLMutationService.createNotificationForUser(notification, showSubdomain);
+    }
+
+    @MutationMapping
+    @RequiresAdminAccess
+    public Boolean deleteNotification(@Argument String uuid) {
+        return this.graphQLMutationService.deleteNotification(uuid);
     }
 
 

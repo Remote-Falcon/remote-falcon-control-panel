@@ -7,6 +7,7 @@ import com.remotefalcon.controlpanel.util.EmailUtil;
 import com.remotefalcon.controlpanel.util.RandomUtil;
 import com.remotefalcon.library.documents.Notification;
 import com.remotefalcon.library.documents.Show;
+import com.remotefalcon.library.enums.NotificationType;
 import com.remotefalcon.library.enums.ShowRole;
 import com.remotefalcon.library.enums.StatusResponse;
 import com.remotefalcon.library.enums.ViewerControlMode;
@@ -482,12 +483,12 @@ public class GraphQLMutationService {
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
     }
 
-    public List<ShowNotification> markNotificationsAsRead(List<String> ids) {
+    public List<ShowNotification> markNotificationsAsRead(List<String> uuids) {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {
             Show existingShow = show.get();
-            ids.forEach(id -> existingShow.getShowNotifications().forEach(showNotification -> {
-                if(Objects.equals(showNotification.getNotification().getId(), id)) {
+            uuids.forEach(uuid -> existingShow.getShowNotifications().forEach(showNotification -> {
+                if(Objects.equals(showNotification.getNotification().getUuid(), uuid)) {
                     showNotification.setRead(true);
                 }
             }));
@@ -497,12 +498,12 @@ public class GraphQLMutationService {
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
     }
 
-    public List<ShowNotification> deleteNotificationForUser(String id) {
+    public List<ShowNotification> deleteNotificationForUser(String uuid) {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {
             Show existingShow = show.get();
             existingShow.getShowNotifications().forEach(showNotification -> {
-                if (Objects.equals(showNotification.getNotification().getId(), id)) {
+                if (Objects.equals(showNotification.getNotification().getUuid(), uuid)) {
                     showNotification.setDeleted(true);
                 }
             });
@@ -513,12 +514,41 @@ public class GraphQLMutationService {
     }
 
     public Boolean createNotification(Notification notification) {
+        notification.setUuid(UUID.randomUUID().toString());
+        notification.setCreatedDate(LocalDateTime.now());
+        notification.setType(NotificationType.ADMIN);
         this.notificationRepository.save(notification);
         return true;
     }
 
-    public Boolean deleteNotification(String id) {
-        this.notificationRepository.deleteById(id);
+    public Boolean createNotificationForUser(Notification notification, String subdomain) {
+        Optional<Show> show = this.showRepository.findByShowSubdomain(subdomain);
+        if(show.isEmpty()) {
+            return false;
+        }
+        buildShowNotification(notification, show.get(), NotificationType.USER);
+        this.showRepository.save(show.get());
+        return true;
+    }
+
+    public void buildShowNotification(Notification notification, Show show, NotificationType notificationType) {
+        notification.setUuid(UUID.randomUUID().toString());
+        notification.setCreatedDate(LocalDateTime.now());
+        notification.setType(notificationType);
+        ShowNotification showNotification = ShowNotification.builder()
+                .notification(notification)
+                .read(false)
+                .deleted(false)
+                .build();
+        if(show.getShowNotifications() == null) {
+            show.setShowNotifications(List.of(showNotification));
+        }else {
+            show.getShowNotifications().add(showNotification);
+        }
+    }
+
+    public Boolean deleteNotification(String uuid) {
+        this.notificationRepository.deleteByUuid(uuid);
         return true;
     }
 }

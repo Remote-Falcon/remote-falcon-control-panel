@@ -7,10 +7,12 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class })
 @EnableAspectJAutoProxy
 @EnableMongoRepositories
+@EnableScheduling
 public class Application {
   public static void main(String[] args) {
     SpringApplication.run(Application.class, args);

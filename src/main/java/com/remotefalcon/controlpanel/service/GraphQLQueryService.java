@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import com.remotefalcon.controlpanel.repository.NotificationRepository;
 import com.remotefalcon.library.documents.Notification;
+import com.remotefalcon.library.enums.NotificationType;
 import com.remotefalcon.library.models.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -152,43 +153,28 @@ public class GraphQLQueryService {
         if(show.isPresent()) {
             Show existingShow = show.get();
             List<Notification> notifications = this.notificationRepository.findAll();
-            List<String> existingNotificationIds = notifications.stream().map(Notification::getId).toList();
+
             List<ShowNotification> showNotifications = existingShow.getShowNotifications() == null ? new ArrayList<>() : existingShow.getShowNotifications();
-            List<ShowNotification> showNotificationsWithRemovedNotifications = new ArrayList<>();
-            if(showNotifications.isEmpty()) {
-                notifications.forEach(notification -> {
+            notifications.forEach(notification -> {
+                if(showNotifications.stream().noneMatch(showNotification -> showNotification.getNotification().getUuid().equals(notification.getUuid()))) {
                     showNotifications.add(ShowNotification.builder()
                             .notification(notification)
                             .read(false)
                             .deleted(false)
                             .build());
-                    showNotificationsWithRemovedNotifications.add(ShowNotification.builder()
-                            .notification(notification)
-                            .read(false)
-                            .deleted(false)
-                            .build());
-                });
-            }else {
-                List<String> existingShowNotificationIds = existingShow.getShowNotifications().stream().map(showNotification -> showNotification.getNotification().getId()).toList();
-                notifications.forEach(notification -> {
-                    if(existingShow.getShowNotifications() == null || !existingShowNotificationIds.contains(notification.getId())) {
-                        showNotifications.add(ShowNotification.builder()
-                                .notification(notification)
-                                .read(false)
-                                .deleted(false)
-                                .build());
-                    }
-                });
-                existingShow.getShowNotifications().forEach((showNotification) -> {
-                    if(existingNotificationIds.contains(showNotification.getNotification().getId())) {
-                        showNotificationsWithRemovedNotifications.add(showNotification);
-                    }
-                });
-            }
-            existingShow.setShowNotifications(showNotificationsWithRemovedNotifications);
+                }
+            });
+
+            showNotifications.removeIf(showNotification -> showNotification.getNotification().getType().equals(NotificationType.FPP_HEALTH)
+                    && showNotification.getNotification().getCreatedDate().isBefore(LocalDateTime.now().minusDays(1)));
+
+            showNotifications.removeIf(showNotification -> showNotification.getNotification().getType().equals(NotificationType.USER) && showNotification.getDeleted());
+
+            existingShow.setShowNotifications(showNotifications);
+
             this.showRepository.save(existingShow);
 
-            return showNotificationsWithRemovedNotifications.stream().filter(showNotification -> !showNotification.getDeleted()).toList();
+            return showNotifications.stream().filter(showNotification -> !showNotification.getDeleted()).toList();
         }
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
     }

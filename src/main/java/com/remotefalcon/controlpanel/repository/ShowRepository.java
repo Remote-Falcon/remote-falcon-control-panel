@@ -17,6 +17,9 @@ public interface ShowRepository extends MongoRepository<Show, String> {
     Optional<Show> findByEmailOrShowSubdomain(String email, String showSubdomain);
     Optional<Show> findByEmailIgnoreCase(String email);
     Optional<Show> findByPasswordResetLinkAndPasswordResetExpiryGreaterThan(String passwordResetLink, LocalDateTime passwordResetExpiry);
+    List<Show> findByPreferencesNotificationPreferencesEnableFppHeartbeatIsTrueAndLastFppHeartbeatBefore(LocalDateTime lastFppHeartbeat);
+
+
 
     @Query("{ 'preferences.showOnMap' : true }")
     List<Show> getShowsOnMap();

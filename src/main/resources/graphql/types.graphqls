@@ -67,6 +67,14 @@ type Preference {
     showOnMap: Boolean
     selfHostedRedirectUrl: String
     blockedViewerIps: [String]
+    notificationPreferences: NotificationPreference
+}
+
+type NotificationPreference {
+    enableFppHeartbeat: Boolean
+    fppHeartbeatIfControlEnabled: Boolean
+    fppHeartbeatRenotifyAfterMinutes: Int
+    fppHeartbeatLastNotification: String
 }
 
 type Sequence {
@@ -161,6 +169,9 @@ type ShowsOnAMap {
 
 type Notification {
     id: String
+    uuid: String
+    createdDate: String
+    preview: String
     subject: String
     message: String
 }

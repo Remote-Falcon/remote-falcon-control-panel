@@ -68,6 +68,14 @@ input PreferenceInput {
     showOnMap: Boolean
     selfHostedRedirectUrl: String
     blockedViewerIps: [String]
+    notificationPreferences: NotificationPreferenceInput
+}
+
+input NotificationPreferenceInput {
+    enableFppHeartbeat: Boolean
+    fppHeartbeatIfControlEnabled: Boolean
+    fppHeartbeatRenotifyAfterMinutes: Int
+    fppHeartbeatLastNotification: String
 }
 
 input SequenceInput {
@@ -121,4 +129,5 @@ input PageInput {
 input NotificationInput {
     subject: String
     message: String
+    preview: String
 }

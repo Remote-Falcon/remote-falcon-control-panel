@@ -2,7 +2,6 @@ package com.remotefalcon.controlpanel.service;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -10,7 +9,6 @@ import java.util.stream.Collectors;
 
 import com.remotefalcon.library.models.*;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.util.StringUtil;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -321,32 +319,6 @@ public class DashboardService {
     return DashboardStatsResponse.Stat.builder()
             .sequences(sequences)
             .build();
-  }
-
-  private Integer buildTotalViewersLiveStat(ZonedDateTime startDateAtZone, ZonedDateTime endDateAtZone, String timezone, Show show, Boolean fillDays) {
-    List<DashboardStatsResponse.Stat> pageStats = new ArrayList<>();
-    if(show.getStats() == null) {
-      return 0;
-    }
-    Map<LocalDate, List<Stat.Page>> pageStatsGroupedByDate = show.getStats().getPage()
-            .stream()
-            .filter(stat -> stat.getDateTime().isAfter(startDateAtZone.toLocalDateTime()))
-            .filter(stat -> stat.getDateTime().isBefore(endDateAtZone.toLocalDateTime()))
-            .collect(Collectors.groupingBy(stat -> stat.getDateTime().toLocalDate()));
-
-    if(fillDays) {
-      this.fillStatDateGaps(startDateAtZone, endDateAtZone, pageStatsGroupedByDate);
-    }
-
-    pageStatsGroupedByDate.forEach((date, stat) -> pageStats.add(DashboardStatsResponse.Stat.builder()
-            .date(ZonedDateTime.of(date, date.atStartOfDay().toLocalTime(), ZoneId.of(timezone)).toInstant().toEpochMilli())
-            .total(stat.size())
-            .unique(stat.stream().collect(Collectors.groupingBy(Stat.Page::getIp)).size())
-            .build()));
-
-    return pageStats.stream()
-            .mapToInt(DashboardStatsResponse.Stat::getUnique)
-            .sum();
   }
 
   private Integer buildTotalRequestsLiveStat(ZonedDateTime startDateAtZone, ZonedDateTime endDateAtZone, String timezone, Show show, Boolean fillDays) {

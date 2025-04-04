@@ -33,3 +33,5 @@ logging:
     org:
       springframework:
         graphql: OFF #Turn off logging for Spring GraphQL
+
+expo-push-url: https://exp.host/--/api/v2/push/send

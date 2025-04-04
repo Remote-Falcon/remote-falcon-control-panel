@@ -22,8 +22,9 @@ type Mutation {
     purgeStats: Boolean
     deleteStatsWithinRange(startDate: Long!, endDate: Long!, timezone: String = "America/Chicago"): Boolean
     createNotification(notification: NotificationInput!): Boolean
-    deleteNotification(id: String!): Boolean
-    markNotificationsAsRead(ids: [String]!): [ShowNotification]
-    deleteNotificationForUser(id: String!): [ShowNotification]
+    createNotificationForUser(notification: NotificationInput!, showSubdomain: String!): Boolean
+    deleteNotification(uuid: String!): Boolean
+    markNotificationsAsRead(uuids: [String]!): [ShowNotification]
+    deleteNotificationForUser(uuid: String!): [ShowNotification]
     updateExpoPushToken(expoPushToken: String!): Boolean
 }
