@@ -483,22 +483,22 @@ public class GraphQLMutationService {
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
     }
 
-    public List<ShowNotification> markNotificationsAsRead(List<String> uuids) {
+    public Boolean markNotificationsAsRead(List<String> uuids) {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {
             Show existingShow = show.get();
-            uuids.forEach(uuid -> existingShow.getShowNotifications().forEach(showNotification -> {
-                if(Objects.equals(showNotification.getNotification().getUuid(), uuid)) {
+            existingShow.getShowNotifications().forEach(showNotification -> {
+                if(uuids.contains(showNotification.getNotification().getUuid())) {
                     showNotification.setRead(true);
                 }
-            }));
+            });
             this.showRepository.save(existingShow);
-            return existingShow.getShowNotifications();
+            return true;
         }
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
     }
 
-    public List<ShowNotification> deleteNotificationForUser(String uuid) {
+    public Boolean deleteNotificationForUser(String uuid) {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {
             Show existingShow = show.get();
@@ -508,7 +508,7 @@ public class GraphQLMutationService {
                 }
             });
             this.showRepository.save(existingShow);
-            return existingShow.getShowNotifications();
+            return true;
         }
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
     }

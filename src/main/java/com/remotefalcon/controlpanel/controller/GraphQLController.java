@@ -166,13 +166,13 @@ public class GraphQLController {
 
     @MutationMapping
     @RequiresAccess
-    public List<ShowNotification> markNotificationsAsRead(@Argument List<String> uuids) {
+    public Boolean markNotificationsAsRead(@Argument List<String> uuids) {
         return this.graphQLMutationService.markNotificationsAsRead(uuids);
     }
 
     @MutationMapping
     @RequiresAccess
-    public List<ShowNotification> deleteNotificationForUser(@Argument String uuid) {
+    public Boolean deleteNotificationForUser(@Argument String uuid) {
         return this.graphQLMutationService.deleteNotificationForUser(uuid);
     }
 
