@@ -174,7 +174,11 @@ public class GraphQLQueryService {
 
             this.showRepository.save(existingShow);
 
-            return showNotifications.stream().filter(showNotification -> !showNotification.getDeleted()).toList();
+            return showNotifications.stream()
+                    .filter(showNotification -> !showNotification.getDeleted())
+                    .sorted(Comparator.comparing(showNotification -> showNotification.getNotification().getCreatedDate(),
+                            Comparator.nullsLast(Comparator.reverseOrder())))
+                    .toList();
         }
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
     }

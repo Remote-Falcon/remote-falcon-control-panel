@@ -23,6 +23,10 @@ public class ExpoNotificationService {
             .build();
 
         RestTemplate restTemplate = new RestTemplate();
-        restTemplate.postForEntity(expoPushUrl, expoPushRequest, Object.class);
+        try {
+            restTemplate.postForEntity(expoPushUrl, expoPushRequest, Object.class);
+        }catch (Exception e) {
+            //log.error("Unable to send expo push notification for {}", to);
+        }
     }
 }
