@@ -46,6 +46,7 @@ input UserProfileInput {
 
 input PreferenceInput {
     viewerControlEnabled: Boolean
+    viewerPageViewOnly: Boolean
     viewerControlMode: String
     resetVotes: Boolean
     jukeboxDepth: Int
