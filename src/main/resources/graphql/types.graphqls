@@ -45,6 +45,7 @@ type UserProfile {
 
 type Preference {
     viewerControlEnabled: Boolean
+    viewerPageViewOnly: Boolean
     viewerControlMode: String
     resetVotes: Boolean
     jukeboxDepth: Int
