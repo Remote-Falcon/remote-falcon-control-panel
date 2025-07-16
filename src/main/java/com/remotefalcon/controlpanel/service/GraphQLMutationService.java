@@ -1,5 +1,6 @@
 package com.remotefalcon.controlpanel.service;
 
+import com.mailersend.sdk.MailerSendResponse;
 import com.remotefalcon.controlpanel.repository.NotificationRepository;
 import com.remotefalcon.controlpanel.repository.ShowRepository;
 import com.remotefalcon.controlpanel.util.AuthUtil;
@@ -12,7 +13,6 @@ import com.remotefalcon.library.enums.ShowRole;
 import com.remotefalcon.library.enums.StatusResponse;
 import com.remotefalcon.library.enums.ViewerControlMode;
 import com.remotefalcon.library.models.*;
-import com.sendgrid.Response;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
@@ -58,8 +58,8 @@ public class GraphQLMutationService {
                     hashedPassword, showToken, showSubdomain);
 
             if(!autoValidateEmail) {
-                Response emailResponse = this.emailUtil.sendSignUpEmail(newShow);
-                if(emailResponse.getStatusCode() != 202) {
+                MailerSendResponse emailResponse = this.emailUtil.sendSignUpEmail(newShow);
+                if(emailResponse.responseStatusCode != 202) {
                     throw new RuntimeException(StatusResponse.EMAIL_CANNOT_BE_SENT.name());
                 }
             }
@@ -138,8 +138,8 @@ public class GraphQLMutationService {
             show.get().setPasswordResetLink(passwordResetLink);
             show.get().setPasswordResetExpiry(LocalDateTime.now().plusDays(1));
             this.showRepository.save(show.get());
-            Response response = this.emailUtil.sendForgotPasswordEmail(show.get(), passwordResetLink);
-            if(response.getStatusCode() != 202) {
+            MailerSendResponse response = this.emailUtil.sendForgotPasswordEmail(show.get(), passwordResetLink);
+            if(response.responseStatusCode != 202) {
                 throw new RuntimeException(StatusResponse.EMAIL_CANNOT_BE_SENT.name());
             }
             return true;
@@ -236,8 +236,8 @@ public class GraphQLMutationService {
             show.get().getApiAccess().setApiAccessToken(accessToken);
             show.get().getApiAccess().setApiAccessSecret(secretKey);
             this.showRepository.save(show.get());
-            Response response = this.emailUtil.sendRequestApiAccessEmail(show.get(), accessToken, secretKey);
-            if(response.getStatusCode() != 202) {
+            MailerSendResponse response = this.emailUtil.sendRequestApiAccessEmail(show.get(), accessToken, secretKey);
+            if(response.responseStatusCode != 202) {
                 show.get().getApiAccess().setApiAccessActive(true);
                 show.get().getApiAccess().setApiAccessToken(accessToken);
                 show.get().getApiAccess().setApiAccessSecret(secretKey);
@@ -262,8 +262,8 @@ public class GraphQLMutationService {
                 changesMade = true;
                 show.get().setEmailVerified(false);
                 show.get().setEmail(email);
-                Response emailResponse = this.emailUtil.sendSignUpEmail(show.get());
-                if(emailResponse.getStatusCode() != 202) {
+                MailerSendResponse emailResponse = this.emailUtil.sendSignUpEmail(show.get());
+                if(emailResponse.responseStatusCode != 202) {
                     show.get().setEmailVerified(true);
                     show.get().setEmail(show.get().getEmail());
                     throw new RuntimeException(StatusResponse.EMAIL_CANNOT_BE_SENT.name());
