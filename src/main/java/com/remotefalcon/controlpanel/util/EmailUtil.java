@@ -1,19 +1,15 @@
 package com.remotefalcon.controlpanel.util;
 
+import com.mailersend.sdk.Recipient;
+import com.mailersend.sdk.emails.Email;
+import com.mailersend.sdk.MailerSend;
+import com.mailersend.sdk.MailerSendResponse;
+import com.mailersend.sdk.exceptions.MailerSendException;
 import com.remotefalcon.library.documents.Show;
-import com.remotefalcon.library.enums.EmailTemplate;
-import com.sendgrid.Method;
-import com.sendgrid.Request;
-import com.sendgrid.Response;
-import com.sendgrid.SendGrid;
-import com.sendgrid.helpers.mail.Mail;
-import com.sendgrid.helpers.mail.objects.Email;
-import com.sendgrid.helpers.mail.objects.Personalization;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 
 @Component
 @Slf4j
@@ -28,52 +24,54 @@ public class EmailUtil {
   @Value("${web.url}")
   String webUrl;
 
-  public Response sendSignUpEmail(Show show) {
-    Personalization personalization = new Personalization();
-    personalization.addTo(new Email(show.getEmail()));
-    personalization.addDynamicTemplateData("Show_Name", show.getShowName());
-    personalization.addDynamicTemplateData("Verify_Link", String.format("%s/verifyEmail/%s/%s", webUrl, show.getShowToken(), show.getShowSubdomain()));
-    return sendEmail(EmailTemplate.SIGN_UP, personalization);
+  public MailerSendResponse sendSignUpEmail(Show show) {
+    Email email = new Email();
+    email.addRecipient(show.getShowName(), show.getEmail());
+
+    Recipient bcc = new Recipient();
+    bcc.email = mailFrom;
+    bcc.name = "Remote Falcon";
+    email.bcc.add(bcc);
+
+    email.setTemplateId("3z0vklojo3eg7qrx");
+    email.setSubject("Welcome to Remote Falcon!");
+    email.AddVariable("showName", show.getShowName());
+    email.AddVariable("verifyEmailLink", String.format("%s/verifyEmail/%s/%s", webUrl, show.getShowToken(), show.getShowSubdomain()));
+    return sendEmail(email);
   }
 
-  public Response sendForgotPasswordEmail(Show show, String passwordResetLink) {
-    Personalization personalization = new Personalization();
-    personalization.addTo(new Email(show.getEmail()));
-    personalization.addDynamicTemplateData("Reset_Password_Link", String.format("%s/resetPassword/%s", webUrl, passwordResetLink));
-    return sendEmail(EmailTemplate.FORGOT_PASSWORD, personalization);
+  public MailerSendResponse sendForgotPasswordEmail(Show show, String passwordResetLink) {
+    Email email = new Email();
+    email.addRecipient(show.getShowName(), show.getEmail());
+    email.setTemplateId("3vz9dlejwxp4kj50");
+    email.setSubject("You forgot your password, huh?");
+    email.AddVariable("resetPasswordLink", String.format("%s/resetPassword/%s", webUrl, passwordResetLink));
+    return sendEmail(email);
   }
 
-  public Response sendRequestApiAccessEmail(Show show, String apiAccessToken, String apiAccessSecret) {
-    Personalization personalization = new Personalization();
-    personalization.addTo(new Email(show.getEmail()));
-    personalization.addDynamicTemplateData("Access_Token", apiAccessToken);
-    personalization.addDynamicTemplateData("Secret_Key", apiAccessSecret);
-    return sendEmail(EmailTemplate.REQUEST_API_ACCESS, personalization);
+  public MailerSendResponse sendRequestApiAccessEmail(Show show, String apiAccessToken, String apiAccessSecret) {
+    Email email = new Email();
+    email.addRecipient(show.getShowName(), show.getEmail());
+    email.setTemplateId("3yxj6lj6e304do2r");
+    email.setSubject("Let's Get Coding!");
+    email.AddVariable("accessToken", apiAccessToken);
+    email.AddVariable("secretKey", apiAccessSecret);
+    return sendEmail(email);
   }
 
-  private Response sendEmail(EmailTemplate emailTemplate, Personalization personalization) {
-    Response response = new Response();
+  private MailerSendResponse sendEmail(Email email) {
+    MailerSendResponse response = new MailerSendResponse();
+    email.setFrom("Remote Falcon", mailFrom);
+
+    MailerSend ms = new MailerSend();
+
+    ms.setToken(sendgridKey);
+
     try {
-      Mail mail = new Mail();
-      mail.setFrom(new Email(mailFrom));
-      mail.setTemplateId(emailTemplate.templateId);
-      mail.addPersonalization(personalization);
-
-      SendGrid sg = new SendGrid(sendgridKey);
-      Request request = new Request();
-
-      request.setMethod(Method.POST);
-      request.setEndpoint("mail/send");
-      request.setBody(mail.build());
-      response = sg.api(request);
-
-      if (response.getStatusCode() != 202) {
-        log.info("Unable to send {} email: {}", emailTemplate, response.getStatusCode());
-      }
-
-    } catch (IOException e) {
-      log.error("Error sending {} email", emailTemplate, e);
-      response.setStatusCode(500);
+      response = ms.emails().send(email);
+    } catch (MailerSendException e) {
+      log.error("Error sending email", e);
+      response.responseStatusCode = 500;
     }
     return response;
   }
