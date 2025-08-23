@@ -2,6 +2,7 @@ package com.remotefalcon.controlpanel.controller;
 
 import com.remotefalcon.controlpanel.aop.RequiresAccess;
 import com.remotefalcon.controlpanel.aop.RequiresAdminAccess;
+import com.remotefalcon.controlpanel.model.AskWattson;
 import com.remotefalcon.controlpanel.response.ShowsOnAMap;
 import com.remotefalcon.library.documents.Notification;
 import com.remotefalcon.library.documents.Show;
@@ -242,5 +243,11 @@ public class GraphQLController {
     @RequiresAccess
     public List<ShowNotification> getNotifications() {
         return this.graphQLQueryService.getNotifications();
+    }
+
+    @QueryMapping
+    @RequiresAccess
+    public AskWattson askWattson(@Argument String prompt) {
+        return this.graphQLQueryService.askWattson(prompt);
     }
 }

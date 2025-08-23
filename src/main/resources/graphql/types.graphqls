@@ -182,3 +182,28 @@ type ShowNotification {
     read: Boolean
     deleted: Boolean
 }
+
+type AskWattson {
+    id: ID
+    object: String
+    created: Long
+    model: String
+    choices: [AskWattsonChoice]
+    usage: AskWattsonUsage
+}
+
+type AskWattsonChoice {
+    index: Int
+    message: AskWattsonMessage
+}
+
+type AskWattsonMessage {
+    role: String
+    content: String
+}
+
+type AskWattsonUsage {
+    promptTokens: Int
+    completionTokens: Int
+    totalTokens: Int
+}

@@ -1,16 +1,18 @@
 package com.remotefalcon.controlpanel.service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
+import com.remotefalcon.controlpanel.model.AskWattson;
 import com.remotefalcon.controlpanel.repository.NotificationRepository;
 import com.remotefalcon.library.documents.Notification;
 import com.remotefalcon.library.enums.NotificationType;
 import com.remotefalcon.library.models.*;
 import org.apache.commons.collections.CollectionUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +27,7 @@ import com.remotefalcon.library.enums.ViewerControlMode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Service
@@ -35,6 +38,12 @@ public class GraphQLQueryService {
     private final ShowRepository showRepository;
     private final NotificationRepository notificationRepository;
     private final HttpServletRequest httpServletRequest;
+
+    @Value("${wattson.endpoint}")
+    String wattsonEndpoint;
+
+    @Value("${wattson.key}")
+    String wattsonKey;
 
     public Show signIn() {
         String[] basicAuthCredentials = this.authUtil.getBasicAuthCredentials(httpServletRequest);
@@ -181,5 +190,37 @@ public class GraphQLQueryService {
                     .toList();
         }
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
+    }
+
+    public AskWattson askWattson(String prompt) {
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + wattsonKey);
+            headers.set(HttpHeaders.CONTENT_TYPE, "application/json");
+
+            prompt = (prompt == null) ? "" : prompt;
+            Map<String, Object> body = new HashMap<>();
+            List<Map<String, Object>> messages = new ArrayList<>();
+            Map<String, Object> userMessage = new HashMap<>();
+            userMessage.put("role", "user");
+            userMessage.put("content", prompt);
+            messages.add(userMessage);
+            body.put("messages", messages);
+            body.put("stream", false);
+            body.put("include_functions_info", false);
+            body.put("include_retrieval_info", false);
+            body.put("include_guardrails_info", false);
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+
+            ResponseEntity<AskWattson> response = restTemplate.postForEntity(wattsonEndpoint + "/api/v1/chat/completions", entity, AskWattson.class);
+
+            return response.getBody();
+        } catch (Exception e) {
+            log.error("Error calling Wattson endpoint", e);
+            throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
+        }
     }
 }
