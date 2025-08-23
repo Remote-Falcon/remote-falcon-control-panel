@@ -83,6 +83,16 @@ spec:
             secretKeyRef:
               name: remote-falcon-control-panel
               key: s3-secretKey
+        - name: wattson.endpoint
+          valueFrom:
+            secretKeyRef:
+              name: remote-falcon-control-panel
+              key: wattson-endpoint
+        - name: wattson.key
+          valueFrom:
+            secretKeyRef:
+              name: remote-falcon-control-panel
+              key: wattson-key
         startupProbe:
           httpGet:
             path: /remote-falcon-control-panel/actuator/health
