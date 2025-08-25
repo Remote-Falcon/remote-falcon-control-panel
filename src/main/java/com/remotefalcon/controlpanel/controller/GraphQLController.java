@@ -247,7 +247,7 @@ public class GraphQLController {
 
     @QueryMapping
     @RequiresAccess
-    public AskWattson askWattson(@Argument String prompt) {
-        return this.graphQLQueryService.askWattson(prompt);
+    public AskWattson askWattson(@Argument String prompt, @Argument String previousResponseId) {
+        return this.graphQLQueryService.askWattson(prompt, previousResponseId);
     }
 }

@@ -3,16 +3,21 @@ package com.remotefalcon.controlpanel.service;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import com.openai.client.OpenAIClient;
+import com.openai.client.okhttp.OpenAIOkHttpClient;
+import com.openai.core.JsonValue;
+import com.openai.models.ChatModel;
+import com.openai.models.responses.FileSearchTool;
+import com.openai.models.responses.Response;
+import com.openai.models.responses.ResponseCreateParams;
 import com.remotefalcon.controlpanel.model.AskWattson;
 import com.remotefalcon.controlpanel.repository.NotificationRepository;
 import com.remotefalcon.library.documents.Notification;
 import com.remotefalcon.library.enums.NotificationType;
 import com.remotefalcon.library.models.*;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +32,8 @@ import com.remotefalcon.library.enums.ViewerControlMode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.client.RestTemplate;
+
+import static com.remotefalcon.controlpanel.util.WattsonUtil.WATTSON_INSTRUCTIONS;
 
 @Slf4j
 @Service
@@ -38,9 +44,6 @@ public class GraphQLQueryService {
     private final ShowRepository showRepository;
     private final NotificationRepository notificationRepository;
     private final HttpServletRequest httpServletRequest;
-
-    @Value("${wattson.endpoint}")
-    String wattsonEndpoint;
 
     @Value("${wattson.key}")
     String wattsonKey;
@@ -192,66 +195,40 @@ public class GraphQLQueryService {
         throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
     }
 
-    public AskWattson askWattson(String prompt) {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
-        if(show.isPresent()) {
-            Show existingShow = show.get();
+    public AskWattson askWattson(String prompt, String previousResponseId) {
+        OpenAIClient client = OpenAIOkHttpClient.builder()
+                .apiKey(wattsonKey)
+                .build();
 
-            if(existingShow.getUserProfile() == null) {
-                throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
-            }
+        FileSearchTool fileSearchTool = FileSearchTool.builder()
+                .addVectorStoreId("vs_68ac71a920f48191a9e6794324b2ba9b")
+                .type(JsonValue.from("file_search"))
+                .build();
 
-            int totalTokens = 0;
-            LocalDateTime lastReset = existingShow.getUserProfile().getLastTokenResetDate();
-            if (lastReset == null || lastReset.isBefore(LocalDateTime.now().minusMonths(1))) {
-                existingShow.getUserProfile().setTotalTokens(totalTokens);
-                existingShow.getUserProfile().setLastTokenResetDate(LocalDateTime.now());
-            }
-            totalTokens = existingShow.getUserProfile().getTotalTokens() == null ? 0 : existingShow.getUserProfile().getTotalTokens();
-            if (totalTokens >= 250_000) {
-                throw new RuntimeException("TOKEN_LIMIT_EXCEEDED");
-            }
-
-            return callWattson(prompt, existingShow);
+        ResponseCreateParams.Builder responseCreateParamsBuilder = ResponseCreateParams.builder()
+                .input(prompt)
+                .model(ChatModel.GPT_5_NANO)
+                .addTool(fileSearchTool)
+                .instructions(WATTSON_INSTRUCTIONS)
+                .temperature(1.0)
+                .topP(1.0);
+        if(StringUtils.isNotEmpty(previousResponseId)) {
+            responseCreateParamsBuilder.previousResponseId(previousResponseId);
+            responseCreateParamsBuilder.store(true);
         }
-        throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
-    }
 
-    private AskWattson callWattson(String prompt, Show show) {
-        try {
-            RestTemplate restTemplate = new RestTemplate();
+        Response gptResponse = client.responses().create(responseCreateParamsBuilder.build());
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Bearer " + wattsonKey);
-            headers.set(HttpHeaders.CONTENT_TYPE, "application/json");
+        AskWattson.AskWattsonBuilder responseBuilder = AskWattson.builder();
 
-            prompt = (prompt == null) ? "" : prompt;
-            Map<String, Object> body = new HashMap<>();
-            List<Map<String, Object>> messages = new ArrayList<>();
-            Map<String, Object> userMessage = new HashMap<>();
-            userMessage.put("role", "user");
-            userMessage.put("content", prompt);
-            messages.add(userMessage);
-            body.put("messages", messages);
-            body.put("stream", false);
-            body.put("include_functions_info", false);
-            body.put("include_retrieval_info", false);
-            body.put("include_guardrails_info", false);
+        responseBuilder.responseId(gptResponse.id());
 
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+        gptResponse.output().stream()
+                .flatMap(item -> item.message().stream())
+                .flatMap(message -> message.content().stream())
+                .flatMap(content -> content.outputText().stream())
+                .forEach(outputText -> responseBuilder.text(outputText.text()));
 
-            ResponseEntity<AskWattson> response = restTemplate.postForEntity(wattsonEndpoint + "/api/v1/chat/completions", entity, AskWattson.class);
-
-            if(response.getBody() != null && response.getBody().getUsage() != null) {
-                Integer totalTokensUsed = response.getBody().getUsage().getTotal_tokens();
-                show.getUserProfile().setTotalTokens(show.getUserProfile().getTotalTokens() + totalTokensUsed);
-                this.showRepository.save(show);
-            }
-
-            return response.getBody();
-        } catch (Exception e) {
-            log.error("Error calling Wattson endpoint", e);
-            throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
-        }
+        return responseBuilder.build();
     }
 }
