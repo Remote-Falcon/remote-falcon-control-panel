@@ -185,26 +185,6 @@ type ShowNotification {
 }
 
 type AskWattson {
-    id: ID
-    object: String
-    created: Long
-    model: String
-    choices: [AskWattsonChoice]
-    usage: AskWattsonUsage
-}
-
-type AskWattsonChoice {
-    index: Int
-    message: AskWattsonMessage
-}
-
-type AskWattsonMessage {
-    role: String
-    content: String
-}
-
-type AskWattsonUsage {
-    prompt_tokens: Int
-    completion_tokens: Int
-    total_tokens: Int
+    responseId: String
+    text: String
 }

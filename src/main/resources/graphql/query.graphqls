@@ -8,5 +8,5 @@ type Query {
     getShowsAutoSuggest(showName: String!): [Show]
     getShowByShowSubdomain(showSubdomain: String!): Show
     getNotifications: [ShowNotification]
-    askWattson(prompt: String!): AskWattson
+    askWattson(prompt: String!, previousResponseId: String): AskWattson
 }

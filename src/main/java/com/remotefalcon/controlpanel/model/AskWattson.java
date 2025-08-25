@@ -12,38 +12,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AskWattson {
-    private String id;
-    private String object;
-    private long created;
-    private String model;
-    private List<Choice> choices;
-    private Usage usage;
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Builder
-    public static class Choice {
-        private int index;
-        private Message message;
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Builder
-    public static class Message {
-        private String role;
-        private String content;
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Builder
-    public static class Usage {
-        private int prompt_tokens;
-        private int completion_tokens;
-        private int total_tokens;
-    }
+    private String responseId;
+    private String text;
 }
