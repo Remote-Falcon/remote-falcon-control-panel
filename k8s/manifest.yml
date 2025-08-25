@@ -88,6 +88,11 @@ spec:
             secretKeyRef:
               name: remote-falcon-control-panel
               key: wattson-key
+        - name: openai.model
+          valueFrom:
+            secretKeyRef:
+              name: remote-falcon-control-panel
+              key: openai-model
         startupProbe:
           httpGet:
             path: /remote-falcon-control-panel/actuator/health
