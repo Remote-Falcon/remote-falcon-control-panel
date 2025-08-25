@@ -193,6 +193,31 @@ public class GraphQLQueryService {
     }
 
     public AskWattson askWattson(String prompt) {
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        if(show.isPresent()) {
+            Show existingShow = show.get();
+
+            if(existingShow.getUserProfile() == null) {
+                throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
+            }
+
+            int totalTokens = 0;
+            LocalDateTime lastReset = existingShow.getUserProfile().getLastTokenResetDate();
+            if (lastReset == null || lastReset.isBefore(LocalDateTime.now().minusMonths(1))) {
+                existingShow.getUserProfile().setTotalTokens(totalTokens);
+                existingShow.getUserProfile().setLastTokenResetDate(LocalDateTime.now());
+            }
+            totalTokens = existingShow.getUserProfile().getTotalTokens() == null ? 0 : existingShow.getUserProfile().getTotalTokens();
+            if (totalTokens >= 250_000) {
+                throw new RuntimeException("TOKEN_LIMIT_EXCEEDED");
+            }
+
+            return callWattson(prompt, existingShow);
+        }
+        throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
+    }
+
+    private AskWattson callWattson(String prompt, Show show) {
         try {
             RestTemplate restTemplate = new RestTemplate();
 
@@ -216,6 +241,12 @@ public class GraphQLQueryService {
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
             ResponseEntity<AskWattson> response = restTemplate.postForEntity(wattsonEndpoint + "/api/v1/chat/completions", entity, AskWattson.class);
+
+            if(response.getBody() != null && response.getBody().getUsage() != null) {
+                Integer totalTokensUsed = response.getBody().getUsage().getTotal_tokens();
+                show.getUserProfile().setTotalTokens(show.getUserProfile().getTotalTokens() + totalTokensUsed);
+                this.showRepository.save(show);
+            }
 
             return response.getBody();
         } catch (Exception e) {
