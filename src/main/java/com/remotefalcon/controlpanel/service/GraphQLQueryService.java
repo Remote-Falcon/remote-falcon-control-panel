@@ -48,6 +48,9 @@ public class GraphQLQueryService {
     @Value("${wattson.key}")
     String wattsonKey;
 
+    @Value("${openai.model:}")
+    String openaiModel;
+
     public Show signIn() {
         String[] basicAuthCredentials = this.authUtil.getBasicAuthCredentials(httpServletRequest);
         if (basicAuthCredentials != null) {
@@ -207,7 +210,7 @@ public class GraphQLQueryService {
 
         ResponseCreateParams.Builder responseCreateParamsBuilder = ResponseCreateParams.builder()
                 .input(prompt)
-                .model(ChatModel.GPT_5_NANO)
+                .model(ChatModel.of(openaiModel))
                 .addTool(fileSearchTool)
                 .instructions(WATTSON_INSTRUCTIONS)
                 .temperature(1.0)
