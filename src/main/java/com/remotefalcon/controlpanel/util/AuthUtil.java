@@ -62,6 +62,7 @@ public class AuthUtil {
               .email((String) userDataMap.get("email"))
               .showSubdomain((String) userDataMap.get("showSubdomain"))
               .showRole(ShowRole.valueOf((String) userDataMap.get("showRole")))
+              .token(token)
               .build();
     }catch (JWTDecodeException jde) {
       throw new RuntimeException(StatusResponse.INVALID_JWT.name());

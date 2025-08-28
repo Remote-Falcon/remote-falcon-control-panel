@@ -15,4 +15,5 @@ public class TokenDTO {
   private String email;
   private String showSubdomain;
   private ShowRole showRole;
+  private String token;
 }

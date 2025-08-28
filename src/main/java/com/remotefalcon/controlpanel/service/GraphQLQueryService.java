@@ -6,10 +6,9 @@ import java.util.*;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import com.openai.core.JsonValue;
+import com.openai.core.http.StreamResponse;
 import com.openai.models.ChatModel;
-import com.openai.models.responses.FileSearchTool;
-import com.openai.models.responses.Response;
-import com.openai.models.responses.ResponseCreateParams;
+import com.openai.models.responses.*;
 import com.remotefalcon.controlpanel.model.AskWattson;
 import com.remotefalcon.controlpanel.repository.NotificationRepository;
 import com.remotefalcon.library.documents.Notification;
@@ -199,6 +198,10 @@ public class GraphQLQueryService {
     }
 
     public AskWattson askWattson(String prompt, String previousResponseId) {
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        if(show.isEmpty()) {
+            return null;
+        }
         OpenAIClient client = OpenAIOkHttpClient.builder()
                 .apiKey(wattsonKey)
                 .build();
@@ -208,11 +211,14 @@ public class GraphQLQueryService {
                 .type(JsonValue.from("file_search"))
                 .build();
 
+        String userPreferences = "Here are the show settings specific to this user in JSON format: " + show.get().getPreferences();
+        String completeInstructions = WATTSON_INSTRUCTIONS + "\n\n" + userPreferences;
+
         ResponseCreateParams.Builder responseCreateParamsBuilder = ResponseCreateParams.builder()
                 .input(prompt)
                 .model(ChatModel.of(openaiModel))
                 .addTool(fileSearchTool)
-                .instructions(WATTSON_INSTRUCTIONS)
+                .instructions(completeInstructions)
                 .temperature(1.0)
                 .topP(1.0);
         if(StringUtils.isNotEmpty(previousResponseId)) {
@@ -225,6 +231,13 @@ public class GraphQLQueryService {
         AskWattson.AskWattsonBuilder responseBuilder = AskWattson.builder();
 
         responseBuilder.responseId(gptResponse.id());
+
+        try (StreamResponse<ResponseStreamEvent> streamResponse =
+                     client.responses().createStreaming(responseCreateParamsBuilder.build())) {
+            streamResponse.stream()
+                    .flatMap(event -> event.outputTextDelta().stream())
+                    .forEach(textEvent -> System.out.print(textEvent.delta()));
+        }
 
         gptResponse.output().stream()
                 .flatMap(item -> item.message().stream())
