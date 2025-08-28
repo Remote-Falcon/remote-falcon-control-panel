@@ -2,20 +2,14 @@ package com.remotefalcon.controlpanel.service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
-import com.remotefalcon.controlpanel.repository.NotificationRepository;
 import com.remotefalcon.controlpanel.repository.ShowRepository;
 import com.remotefalcon.library.documents.Notification;
 import com.remotefalcon.library.documents.Show;
 import com.remotefalcon.library.enums.NotificationType;
-import com.remotefalcon.library.models.ShowNotification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Service
