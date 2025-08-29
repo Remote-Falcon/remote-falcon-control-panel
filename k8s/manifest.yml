@@ -93,6 +93,11 @@ spec:
             secretKeyRef:
               name: remote-falcon-control-panel
               key: openai-model
+        - name: wattson.max_output_tokens
+          valueFrom:
+            secretKeyRef:
+              name: remote-falcon-control-panel
+              key: max-output-tokens
         startupProbe:
           httpGet:
             path: /remote-falcon-control-panel/actuator/health
