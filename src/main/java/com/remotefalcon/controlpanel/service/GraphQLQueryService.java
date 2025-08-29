@@ -6,7 +6,6 @@ import java.util.*;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import com.openai.core.JsonValue;
-import com.openai.core.http.StreamResponse;
 import com.openai.models.ChatModel;
 import com.openai.models.responses.*;
 import com.remotefalcon.controlpanel.model.AskWattson;
@@ -49,6 +48,9 @@ public class GraphQLQueryService {
 
     @Value("${openai.model:}")
     String openaiModel;
+    
+    @Value("${wattson.max_output_tokens:0}")
+    Long wattsonMaxOutputTokens;
 
     public Show signIn() {
         String[] basicAuthCredentials = this.authUtil.getBasicAuthCredentials(httpServletRequest);
@@ -164,37 +166,114 @@ public class GraphQLQueryService {
 
     public List<ShowNotification> getNotifications() {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
-        if(show.isPresent()) {
-            Show existingShow = show.get();
-            List<Notification> notifications = this.notificationRepository.findAll();
-
-            List<ShowNotification> showNotifications = existingShow.getShowNotifications() == null ? new ArrayList<>() : existingShow.getShowNotifications();
-            notifications.forEach(notification -> {
-                if(showNotifications.stream().noneMatch(showNotification -> showNotification.getNotification().getUuid().equals(notification.getUuid()))) {
-                    showNotifications.add(ShowNotification.builder()
-                            .notification(notification)
-                            .read(false)
-                            .deleted(false)
-                            .build());
-                }
-            });
-
-            showNotifications.removeIf(showNotification -> showNotification.getNotification().getType().equals(NotificationType.FPP_HEALTH)
-                    && showNotification.getNotification().getCreatedDate().isBefore(LocalDateTime.now().minusDays(1)));
-
-            showNotifications.removeIf(showNotification -> showNotification.getNotification().getType().equals(NotificationType.USER) && showNotification.getDeleted());
-
-            existingShow.setShowNotifications(showNotifications);
-
-            this.showRepository.save(existingShow);
-
-            return showNotifications.stream()
-                    .filter(showNotification -> !showNotification.getDeleted())
-                    .sorted(Comparator.comparing(showNotification -> showNotification.getNotification().getCreatedDate(),
-                            Comparator.nullsLast(Comparator.reverseOrder())))
-                    .toList();
+        if (show.isEmpty()) {
+            throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
         }
-        throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
+
+        Show existingShow = show.get();
+
+        // Source of truth: repository notifications
+        List<Notification> repoNotifications = Optional.ofNullable(this.notificationRepository.findAll())
+                .orElse(Collections.emptyList());
+
+        // User's current notification states (read/deleted)
+        List<ShowNotification> userNotifs = Optional.ofNullable(existingShow.getShowNotifications())
+                .orElseGet(ArrayList::new);
+
+        // Index user's notifications by UUID (null-safe)
+        Map<String, ShowNotification> userByUuid = new HashMap<>();
+        for (ShowNotification sn : userNotifs) {
+            if (sn == null) continue;
+            Notification n = sn.getNotification();
+            String uuid = (n == null) ? null : n.getUuid();
+            if (uuid != null) {
+                userByUuid.put(uuid, sn);
+            }
+        }
+
+        List<ShowNotification> merged = new ArrayList<>();
+
+        for (Notification repoNotif : repoNotifications) {
+            if (repoNotif == null || repoNotif.getUuid() == null) continue;
+            ShowNotification userSN = userByUuid.remove(repoNotif.getUuid());
+
+            if (userSN == null) {
+                // New to user → add default state
+                merged.add(ShowNotification.builder()
+                        .notification(repoNotif)
+                        .read(false)
+                        .deleted(false)
+                        .build());
+                continue;
+            }
+
+            // Existing in both places: honor user's deleted/read flags
+            if (Boolean.TRUE.equals(userSN.getDeleted())) {
+                NotificationType type = repoNotif.getType();
+                // For ADMIN notifications: keep the deleted record so it is not re-added on next calls
+                if (type == NotificationType.ADMIN) {
+                    userSN.setNotification(repoNotif);
+                    merged.add(userSN); // remains deleted; excluded from returned list but preserved in DB
+                }
+                // For USER and FPP_HEALTH: drop it completely
+                continue;
+            }
+
+            // Keep, but update the master Notification details
+            userSN.setNotification(repoNotif);
+            // If marked read by user, keep it; otherwise leave as-is (default false)
+            userSN.setRead(Boolean.TRUE.equals(userSN.getRead()));
+            merged.add(userSN);
+        }
+
+        // Add any remaining user-only notifications (repo no longer has them)
+        for (ShowNotification leftover : userByUuid.values()) {
+            if (leftover == null) continue;
+            Notification ln = leftover.getNotification();
+            NotificationType lt = ln == null ? null : ln.getType();
+
+            // If an ADMIN notification no longer exists in the repo,
+            // delete it completely from the user's notifications (do not add to merged).
+            if (lt == NotificationType.ADMIN) {
+                continue;
+            }
+
+            // For USER and FPP_HEALTH: keep if not deleted
+            if (!Boolean.TRUE.equals(leftover.getDeleted())) {
+                merged.add(leftover);
+            }
+        }
+
+        // Cleanup: age-out old FPP_HEALTH notifications and enforce deleted flag removal
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(1);
+        merged.removeIf(sn -> {
+            if (sn == null) return true; // drop null entries defensively
+            Notification n = sn.getNotification();
+            NotificationType type = (n == null) ? null : n.getType();
+            LocalDateTime created = (n == null) ? null : n.getCreatedDate();
+
+            // Remove if user marked deleted: only for USER and FPP_HEALTH
+            if (Boolean.TRUE.equals(sn.getDeleted())) {
+                return type == NotificationType.USER || type == NotificationType.FPP_HEALTH;
+            }
+
+            // Remove stale health notifications
+            return type == NotificationType.FPP_HEALTH && created != null && created.isBefore(cutoff);
+        });
+
+        // Persist merged state on user
+        existingShow.setShowNotifications(merged);
+        this.showRepository.save(existingShow);
+
+        // Return non-deleted sorted by createdDate desc (nulls last)
+        return merged.stream()
+                .filter(sn -> sn != null && !Boolean.TRUE.equals(sn.getDeleted()))
+                .sorted(Comparator.comparing(
+                        (ShowNotification sn) -> Optional.ofNullable(sn.getNotification())
+                                .map(Notification::getCreatedDate)
+                                .orElse(null),
+                        Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
     }
 
     public AskWattson askWattson(String prompt, String previousResponseId) {
@@ -211,16 +290,19 @@ public class GraphQLQueryService {
                 .type(JsonValue.from("file_search"))
                 .build();
 
-        String userPreferences = "Here are the show settings specific to this user in JSON format: " + show.get().getPreferences();
+        String prettyPreferences = this.getPrettyPreferences(show.get().getPreferences());
+        String userPreferences = "Here are the show settings specific to this user: " + prettyPreferences;
         String completeInstructions = WATTSON_INSTRUCTIONS + "\n\n" + userPreferences;
 
         ResponseCreateParams.Builder responseCreateParamsBuilder = ResponseCreateParams.builder()
                 .input(prompt)
                 .model(ChatModel.of(openaiModel))
                 .addTool(fileSearchTool)
-                .instructions(completeInstructions)
+                .maxOutputTokens(wattsonMaxOutputTokens)
                 .temperature(1.0)
-                .topP(1.0);
+                .topP(1.0)
+                .instructions(completeInstructions);
+
         if(StringUtils.isNotEmpty(previousResponseId)) {
             responseCreateParamsBuilder.previousResponseId(previousResponseId);
             responseCreateParamsBuilder.store(true);
@@ -228,16 +310,7 @@ public class GraphQLQueryService {
 
         Response gptResponse = client.responses().create(responseCreateParamsBuilder.build());
 
-        AskWattson.AskWattsonBuilder responseBuilder = AskWattson.builder();
-
-        responseBuilder.responseId(gptResponse.id());
-
-        try (StreamResponse<ResponseStreamEvent> streamResponse =
-                     client.responses().createStreaming(responseCreateParamsBuilder.build())) {
-            streamResponse.stream()
-                    .flatMap(event -> event.outputTextDelta().stream())
-                    .forEach(textEvent -> System.out.print(textEvent.delta()));
-        }
+        AskWattson.AskWattsonBuilder responseBuilder = AskWattson.builder().responseId(gptResponse.id());
 
         gptResponse.output().stream()
                 .flatMap(item -> item.message().stream())
@@ -246,5 +319,57 @@ public class GraphQLQueryService {
                 .forEach(outputText -> responseBuilder.text(outputText.text()));
 
         return responseBuilder.build();
+    }
+
+    private String getPrettyPreferences(Preference preference) {
+        if (preference == null) {
+            return "";
+        }
+
+        java.util.List<String> pairs = new java.util.ArrayList<>();
+
+        // Top-level preferences (user-friendly labels)
+        addPair(pairs, "Viewer Control Enabled", preference.getViewerControlEnabled());
+        addPair(pairs, "Viewer Page View Only", preference.getViewerPageViewOnly());
+        addPair(pairs, "Viewer Control Mode", preference.getViewerControlMode());
+        addPair(pairs, "Jukebox Depth", preference.getJukeboxDepth());
+        addPair(pairs, "Jukebox Request Limit", preference.getJukeboxRequestLimit());
+        addPair(pairs, "Check If Voted", preference.getCheckIfVoted());
+        addPair(pairs, "Check If Requested", preference.getCheckIfRequested());
+        addPair(pairs, "PSA Enabled", preference.getPsaEnabled());
+        addPair(pairs, "PSA Frequency", preference.getPsaFrequency());
+        addPair(pairs, "Location Check Method", preference.getLocationCheckMethod());
+        addPair(pairs, "Show Latitude", preference.getShowLatitude());
+        addPair(pairs, "Show Longitude", preference.getShowLongitude());
+        addPair(pairs, "Allowed Radius", preference.getAllowedRadius());
+        addPair(pairs, "Location Code", preference.getLocationCode());
+        addPair(pairs, "Hide Sequence Count", preference.getHideSequenceCount());
+        addPair(pairs, "Show On Map", preference.getShowOnMap());
+
+        if (preference.getBlockedViewerIps() != null && !preference.getBlockedViewerIps().isEmpty()) {
+            addPair(pairs, "Blocked Viewer IPs", String.join("|", preference.getBlockedViewerIps()));
+        }
+
+        // Notification preferences (nested)
+        NotificationPreference np = preference.getNotificationPreferences();
+        if (np != null) {
+            addPair(pairs, "Enable FPP Heartbeat", np.getEnableFppHeartbeat());
+            addPair(pairs, "FPP Heartbeat If Control Enabled", np.getFppHeartbeatIfControlEnabled());
+            addPair(pairs, "FPP Heartbeat Renotify After Minutes", np.getFppHeartbeatRenotifyAfterMinutes());
+        }
+
+        return String.join(", ", pairs);
+    }
+
+    private void addPair(java.util.List<String> pairs, String key, Object value) {
+        if (value == null) return;
+        if (value instanceof String s) {
+            if (org.apache.commons.lang3.StringUtils.isBlank(s)) return;
+            pairs.add(key + "=" + s);
+        } else if (value instanceof java.lang.Boolean b) {
+            pairs.add(key + "=" + (b ? "true" : "false"));
+        } else {
+            pairs.add(key + "=" + String.valueOf(value));
+        }
     }
 }
