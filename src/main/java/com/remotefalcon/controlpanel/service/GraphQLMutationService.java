@@ -487,7 +487,9 @@ public class GraphQLMutationService {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {
             Show existingShow = show.get();
-            existingShow.getShowNotifications().forEach(showNotification -> {
+            Optional.ofNullable(existingShow.getShowNotifications())
+                    .orElse(Collections.emptyList())
+                    .forEach(showNotification -> {
                 if(uuids.contains(showNotification.getNotification().getUuid())) {
                     showNotification.setRead(true);
                 }
@@ -502,7 +504,9 @@ public class GraphQLMutationService {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
         if(show.isPresent()) {
             Show existingShow = show.get();
-            existingShow.getShowNotifications().forEach(showNotification -> {
+            Optional.ofNullable(existingShow.getShowNotifications())
+                    .orElse(Collections.emptyList())
+                    .forEach(showNotification -> {
                 if (Objects.equals(showNotification.getNotification().getUuid(), uuid)) {
                     showNotification.setDeleted(true);
                 }
@@ -541,10 +545,9 @@ public class GraphQLMutationService {
                 .deleted(false)
                 .build();
         if(show.getShowNotifications() == null) {
-            show.setShowNotifications(List.of(showNotification));
-        }else {
-            show.getShowNotifications().add(showNotification);
+            show.setShowNotifications(new ArrayList<>());
         }
+        show.getShowNotifications().add(showNotification);
     }
 
     public Boolean deleteNotification(String uuid) {
@@ -552,3 +555,4 @@ public class GraphQLMutationService {
         return true;
     }
 }
+
