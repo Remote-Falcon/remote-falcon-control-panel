@@ -221,8 +221,6 @@ public class GraphQLQueryService {
 
             // Keep, but update the master Notification details
             userSN.setNotification(repoNotif);
-            // If marked read by user, keep it; otherwise leave as-is (default false)
-            userSN.setRead(Boolean.TRUE.equals(userSN.getRead()));
             merged.add(userSN);
         }
 
@@ -373,3 +371,4 @@ public class GraphQLQueryService {
         }
     }
 }
+
