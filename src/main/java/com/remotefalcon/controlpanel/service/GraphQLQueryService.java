@@ -182,12 +182,18 @@ public class GraphQLQueryService {
 
         // Index user's notifications by UUID (null-safe)
         Map<String, ShowNotification> userByUuid = new HashMap<>();
+        Map<String, ShowNotification> userById = new HashMap<>();
         for (ShowNotification sn : userNotifs) {
             if (sn == null) continue;
             Notification n = sn.getNotification();
-            String uuid = (n == null) ? null : n.getUuid();
+            if (n == null) continue;
+            String uuid = n.getUuid();
+            String id = n.getId();
             if (uuid != null) {
                 userByUuid.put(uuid, sn);
+            }
+            if (id != null) {
+                userById.put(id, sn);
             }
         }
 
@@ -195,7 +201,11 @@ public class GraphQLQueryService {
 
         for (Notification repoNotif : repoNotifications) {
             if (repoNotif == null || repoNotif.getUuid() == null) continue;
+            // First try to match by UUID; if that fails, fall back to Mongo ID.
             ShowNotification userSN = userByUuid.remove(repoNotif.getUuid());
+            if (userSN == null && repoNotif.getId() != null) {
+                userSN = userById.remove(repoNotif.getId());
+            }
 
             if (userSN == null) {
                 // New to user → add default state
