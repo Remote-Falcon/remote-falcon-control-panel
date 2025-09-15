@@ -182,18 +182,12 @@ public class GraphQLQueryService {
 
         // Index user's notifications by UUID (null-safe)
         Map<String, ShowNotification> userByUuid = new HashMap<>();
-        Map<String, ShowNotification> userById = new HashMap<>();
         for (ShowNotification sn : userNotifs) {
             if (sn == null) continue;
-            Notification n = sn.getNotification();
-            if (n == null) continue;
-            String uuid = n.getUuid();
-            String id = n.getId();
+            NotificationModel n = sn.getNotification();
+            String uuid = (n == null) ? null : n.getUuid();
             if (uuid != null) {
                 userByUuid.put(uuid, sn);
-            }
-            if (id != null) {
-                userById.put(id, sn);
             }
         }
 
@@ -201,16 +195,19 @@ public class GraphQLQueryService {
 
         for (Notification repoNotif : repoNotifications) {
             if (repoNotif == null || repoNotif.getUuid() == null) continue;
-            // First try to match by UUID; if that fails, fall back to Mongo ID.
             ShowNotification userSN = userByUuid.remove(repoNotif.getUuid());
-            if (userSN == null && repoNotif.getId() != null) {
-                userSN = userById.remove(repoNotif.getId());
-            }
 
             if (userSN == null) {
                 // New to user → add default state
                 merged.add(ShowNotification.builder()
-                        .notification(repoNotif)
+                        .notification(NotificationModel.builder()
+                          .type(repoNotif.getType())
+                          .uuid(repoNotif.getUuid())
+                          .createdDate(repoNotif.getCreatedDate())
+                          .message(repoNotif.getMessage())
+                          .preview(repoNotif.getPreview())
+                          .subject(repoNotif.getSubject())
+                          .build())
                         .read(false)
                         .deleted(false)
                         .build());
@@ -222,7 +219,14 @@ public class GraphQLQueryService {
                 NotificationType type = repoNotif.getType();
                 // For ADMIN notifications: keep the deleted record so it is not re-added on next calls
                 if (type == NotificationType.ADMIN) {
-                    userSN.setNotification(repoNotif);
+                    userSN.setNotification(NotificationModel.builder()
+                          .type(repoNotif.getType())
+                          .uuid(repoNotif.getUuid())
+                          .createdDate(repoNotif.getCreatedDate())
+                          .message(repoNotif.getMessage())
+                          .preview(repoNotif.getPreview())
+                          .subject(repoNotif.getSubject())
+                          .build());
                     merged.add(userSN); // remains deleted; excluded from returned list but preserved in DB
                 }
                 // For USER and FPP_HEALTH: drop it completely
@@ -230,14 +234,23 @@ public class GraphQLQueryService {
             }
 
             // Keep, but update the master Notification details
-            userSN.setNotification(repoNotif);
+            userSN.setNotification(NotificationModel.builder()
+                          .type(repoNotif.getType())
+                          .uuid(repoNotif.getUuid())
+                          .createdDate(repoNotif.getCreatedDate())
+                          .message(repoNotif.getMessage())
+                          .preview(repoNotif.getPreview())
+                          .subject(repoNotif.getSubject())
+                          .build());
+            // If marked read by user, keep it; otherwise leave as-is (default false)
+            userSN.setRead(Boolean.TRUE.equals(userSN.getRead()));
             merged.add(userSN);
         }
 
         // Add any remaining user-only notifications (repo no longer has them)
         for (ShowNotification leftover : userByUuid.values()) {
             if (leftover == null) continue;
-            Notification ln = leftover.getNotification();
+            NotificationModel ln = leftover.getNotification();
             NotificationType lt = ln == null ? null : ln.getType();
 
             // If an ADMIN notification no longer exists in the repo,
@@ -256,7 +269,7 @@ public class GraphQLQueryService {
         LocalDateTime cutoff = LocalDateTime.now().minusDays(1);
         merged.removeIf(sn -> {
             if (sn == null) return true; // drop null entries defensively
-            Notification n = sn.getNotification();
+            NotificationModel n = sn.getNotification();
             NotificationType type = (n == null) ? null : n.getType();
             LocalDateTime created = (n == null) ? null : n.getCreatedDate();
 
@@ -278,7 +291,7 @@ public class GraphQLQueryService {
                 .filter(sn -> sn != null && !Boolean.TRUE.equals(sn.getDeleted()))
                 .sorted(Comparator.comparing(
                         (ShowNotification sn) -> Optional.ofNullable(sn.getNotification())
-                                .map(Notification::getCreatedDate)
+                                .map(NotificationModel::getCreatedDate)
                                 .orElse(null),
                         Comparator.nullsLast(Comparator.reverseOrder())))
                 .toList();

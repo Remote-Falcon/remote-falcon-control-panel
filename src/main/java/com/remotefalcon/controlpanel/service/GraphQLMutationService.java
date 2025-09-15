@@ -540,7 +540,14 @@ public class GraphQLMutationService {
         notification.setCreatedDate(LocalDateTime.now());
         notification.setType(notificationType);
         ShowNotification showNotification = ShowNotification.builder()
-                .notification(notification)
+                .notification(NotificationModel.builder()
+                          .type(notification.getType())
+                          .uuid(notification.getUuid())
+                          .createdDate(notification.getCreatedDate())
+                          .message(notification.getMessage())
+                          .preview(notification.getPreview())
+                          .subject(notification.getSubject())
+                          .build())
                 .read(false)
                 .deleted(false)
                 .build();
