@@ -195,6 +195,12 @@ public class GraphQLController {
         return this.graphQLMutationService.deleteNotification(uuid);
     }
 
+    @MutationMapping
+    @RequiresAccess
+    public Boolean wattsonFeedback(@Argument String responseId, @Argument String feedback) {
+        return this.graphQLMutationService.wattsonFeedback(responseId, feedback);
+    }
+
 
     /*******
      Queries

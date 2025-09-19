@@ -3,11 +3,13 @@ package com.remotefalcon.controlpanel.service;
 import com.mailersend.sdk.MailerSendResponse;
 import com.remotefalcon.controlpanel.repository.NotificationRepository;
 import com.remotefalcon.controlpanel.repository.ShowRepository;
+import com.remotefalcon.controlpanel.repository.WattsonRepository;
 import com.remotefalcon.controlpanel.util.AuthUtil;
 import com.remotefalcon.controlpanel.util.EmailUtil;
 import com.remotefalcon.controlpanel.util.RandomUtil;
 import com.remotefalcon.library.documents.Notification;
 import com.remotefalcon.library.documents.Show;
+import com.remotefalcon.library.documents.Wattson;
 import com.remotefalcon.library.enums.NotificationType;
 import com.remotefalcon.library.enums.ShowRole;
 import com.remotefalcon.library.enums.StatusResponse;
@@ -35,6 +37,7 @@ public class GraphQLMutationService {
     private final AuthUtil authUtil;
     private final ShowRepository showRepository;
     private final NotificationRepository notificationRepository;
+    private final WattsonRepository wattsonRepository;
     private final HttpServletRequest httpServletRequest;
 
     @Value("${auto-validate-email}")
@@ -559,6 +562,26 @@ public class GraphQLMutationService {
 
     public Boolean deleteNotification(String uuid) {
         this.notificationRepository.deleteByUuid(uuid);
+        return true;
+    }
+
+    public Boolean wattsonFeedback(String responseId, String feedback) {
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        if(show.isEmpty()) {
+            return false;
+        }
+        
+        Wattson wattson = this.wattsonRepository.findByResponseId(responseId);
+        if(wattson != null) {
+            wattson.setFeedback(feedback);
+        }else {
+            wattson = Wattson.builder()
+                .showSubdomain(show.get().getShowSubdomain())
+                .responseId(responseId)
+                .feedback(feedback)
+                .build();
+        }
+        this.wattsonRepository.save(wattson);
         return true;
     }
 }
