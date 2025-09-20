@@ -188,3 +188,14 @@ type AskWattson {
     responseId: String
     text: String
 }
+
+type Wattson {
+    showSubdomain: String
+    responseId: String
+    feedback: String
+}
+
+type WattsonResponse {
+    prompt: String
+    response: String
+}

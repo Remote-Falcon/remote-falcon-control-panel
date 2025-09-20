@@ -3,12 +3,15 @@ package com.remotefalcon.controlpanel.service;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import com.openai.core.JsonValue;
 import com.openai.models.ChatModel;
 import com.openai.models.responses.*;
 import com.remotefalcon.controlpanel.model.AskWattson;
+import com.remotefalcon.controlpanel.model.WattsonResponse;
 import com.remotefalcon.controlpanel.repository.NotificationRepository;
 import com.remotefalcon.library.documents.Notification;
 import com.remotefalcon.library.enums.NotificationType;
@@ -16,14 +19,22 @@ import com.remotefalcon.library.models.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import com.remotefalcon.controlpanel.repository.ShowRepository;
+import com.remotefalcon.controlpanel.repository.WattsonRepository;
 import com.remotefalcon.controlpanel.response.ShowsOnAMap;
 import com.remotefalcon.controlpanel.util.AuthUtil;
 import com.remotefalcon.controlpanel.util.ClientUtil;
 import com.remotefalcon.library.documents.Show;
+import com.remotefalcon.library.documents.Wattson;
 import com.remotefalcon.library.enums.StatusResponse;
 import com.remotefalcon.library.enums.ViewerControlMode;
 
@@ -41,6 +52,7 @@ public class GraphQLQueryService {
     private final ClientUtil clientUtil;
     private final ShowRepository showRepository;
     private final NotificationRepository notificationRepository;
+    private final WattsonRepository wattsonRepository;
     private final HttpServletRequest httpServletRequest;
 
     @Value("${wattson.key}")
@@ -392,5 +404,155 @@ public class GraphQLQueryService {
         } else {
             pairs.add(key + "=" + String.valueOf(value));
         }
+    }
+
+    public List<Wattson> getWattsonFeedback(String filterBy) {
+        if(filterBy == null || filterBy.isEmpty()) {
+            return this.wattsonRepository.findAll();
+        }else {
+            return this.wattsonRepository.findAllByFeedback(filterBy);
+        }
+    }
+
+    public WattsonResponse getWattsonResponse(String responseId) {
+        if (StringUtils.isBlank(responseId)) {
+            return null;
+        }
+
+        String url = "https://api.openai.com/v1/responses/" + responseId;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(wattsonKey);
+
+        RestTemplate restTemplate = new RestTemplate();
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<String> responseEntity = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    requestEntity,
+                    String.class);
+
+            String body = responseEntity.getBody();
+            if (StringUtils.isBlank(body)) {
+                return null;
+            }
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode rootNode = objectMapper.readTree(body);
+            String responseText = extractOutputContent(rootNode);
+            String promptText = fetchInputPrompt(responseId);
+
+            return WattsonResponse.builder()
+                    .prompt(promptText)
+                    .response(responseText)
+                    .build();
+        } catch (Exception ex) {
+            log.error("Failed to retrieve Wattson response {}", responseId, ex);
+            return null;
+        }
+    }
+
+    private String fetchInputPrompt(String responseId) {
+        String url = "https://api.openai.com/v1/responses/" + responseId + "/input_items";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(wattsonKey);
+
+        RestTemplate restTemplate = new RestTemplate();
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<String> responseEntity = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    requestEntity,
+                    String.class);
+
+            String body = responseEntity.getBody();
+            if (StringUtils.isBlank(body)) {
+                return null;
+            }
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode rootNode = objectMapper.readTree(body);
+            return extractPromptContent(rootNode);
+        } catch (Exception ex) {
+            log.error("Failed to retrieve input items for response {}", responseId, ex);
+            return null;
+        }
+    }
+
+    private String extractOutputContent(JsonNode rootNode) {
+        if (rootNode == null) {
+            return null;
+        }
+
+        JsonNode outputNode = rootNode.path("output");
+        if (!outputNode.isArray()) {
+            return null;
+        }
+
+        StringBuilder responseBuilder = new StringBuilder();
+        for (JsonNode itemNode : outputNode) {
+            JsonNode contentNode = itemNode.path("content");
+            if (!contentNode.isArray()) {
+                continue;
+            }
+
+            for (JsonNode contentItem : contentNode) {
+                String text = contentItem.path("text").asText(null);
+                if (StringUtils.isBlank(text)) {
+                    continue;
+                }
+
+                if (responseBuilder.length() > 0) {
+                    responseBuilder.append("\n");
+                }
+                responseBuilder.append(text);
+            }
+        }
+
+        return responseBuilder.length() == 0 ? null : responseBuilder.toString();
+    }
+
+    private String extractPromptContent(JsonNode rootNode) {
+        if (rootNode == null) {
+            return null;
+        }
+
+        JsonNode dataNode = rootNode.path("data");
+        if (!dataNode.isArray()) {
+            return null;
+        }
+
+        for (JsonNode itemNode : dataNode) {
+            JsonNode contentNode = itemNode.path("content");
+            if (!contentNode.isArray()) {
+                continue;
+            }
+
+            StringBuilder promptBuilder = new StringBuilder();
+            for (JsonNode contentItem : contentNode) {
+                String text = contentItem.path("text").asText(null);
+                if (StringUtils.isBlank(text)) {
+                    continue;
+                }
+
+                if (promptBuilder.length() > 0) {
+                    promptBuilder.append("\n");
+                }
+                promptBuilder.append(text);
+            }
+
+            if (promptBuilder.length() > 0) {
+                return promptBuilder.toString();
+            }
+        }
+
+        return null;
     }
 }

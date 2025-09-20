@@ -9,4 +9,6 @@ type Query {
     getShowByShowSubdomain(showSubdomain: String!): Show
     getNotifications: [ShowNotification]
     askWattson(prompt: String!, previousResponseId: String): AskWattson
+    getWattsonResponse(responseId: String!): WattsonResponse
+    getWattsonFeedback(filterBy: String): [Wattson]
 }
