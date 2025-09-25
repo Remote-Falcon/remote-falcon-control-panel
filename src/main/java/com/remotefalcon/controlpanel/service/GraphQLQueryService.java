@@ -2,6 +2,7 @@ package com.remotefalcon.controlpanel.service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -93,6 +94,26 @@ public class GraphQLQueryService {
         throw new RuntimeException(StatusResponse.UNAUTHORIZED.name());
     }
 
+    public Show adminImpersonateShow(String showSubdomain) {
+        Optional<Show> optionalShow = this.showRepository.findByShowSubdomain(showSubdomain);
+        if (optionalShow.isEmpty()) {
+            throw new RuntimeException(StatusResponse.SHOW_NOT_FOUND.name());
+        }
+        Show show = optionalShow.get();
+        show.setServiceToken(this.authUtil.signJwt(show));
+        return show;
+    }
+
+    public List<String> getShowsAutoSuggest(String showName) {
+        if (StringUtils.isBlank(showName)) {
+            return Collections.emptyList();
+        }
+        return this.showRepository.findTop10ByShowNameContainingIgnoreCase(showName)
+                .stream()
+                .map(Show::getShowName)
+                .collect(Collectors.toList());
+    }
+
     private void checkFields(Show show) {
         if(show.getPreferences().getViewerControlMode() == null) {
             show.getPreferences().setViewerControlMode(ViewerControlMode.JUKEBOX);
@@ -171,8 +192,8 @@ public class GraphQLQueryService {
         return showsOnAMapList;
     }
 
-    public Show getShowByShowSubdomain(String showSubdomain) {
-        Optional<Show> show = this.showRepository.findByShowSubdomain(showSubdomain);
+    public Show getShowByShowName(String showName) {
+        Optional<Show> show = this.showRepository.findByShowName(showName);
         return show.orElse(null);
     }
 

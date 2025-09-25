@@ -213,6 +213,18 @@ public class GraphQLController {
     }
 
     @QueryMapping
+    @RequiresAdminAccess
+    public Show adminImpersonateShow(@Argument String showSubdomain) {
+        return graphQLQueryService.adminImpersonateShow(showSubdomain);
+    }
+
+    @QueryMapping
+    @RequiresAdminAccess
+    public List<String> getShowsAutoSuggest(@Argument String showName) {
+        return graphQLQueryService.getShowsAutoSuggest(showName);
+    }
+
+    @QueryMapping
     public Show verifyPasswordResetLink(@Argument String passwordResetLink) {
         return graphQLQueryService.verifyPasswordResetLink(passwordResetLink);
     }
@@ -243,8 +255,8 @@ public class GraphQLController {
 
     @QueryMapping
     @RequiresAdminAccess
-    public Show getShowByShowSubdomain(@Argument String showSubdomain) {
-        return graphQLQueryService.getShowByShowSubdomain(showSubdomain);
+    public Show getShowByShowName(@Argument String showName) {
+        return graphQLQueryService.getShowByShowName(showName);
     }
 
     @QueryMapping

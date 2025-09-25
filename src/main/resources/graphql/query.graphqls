@@ -5,10 +5,11 @@ type Query {
     dashboardLiveStats(startDate: Long!, endDate: Long!, timezone: String = "America/Chicago"): DashboardLiveStats
     dashboardStats(startDate: Long!, endDate: Long!, timezone: String = "America/Chicago"): DashboardStats
     showsOnAMap: [ShowsOnAMap]
-    getShowsAutoSuggest(showName: String!): [Show]
-    getShowByShowSubdomain(showSubdomain: String!): Show
+    getShowsAutoSuggest(showName: String!): [String]
+    getShowByShowName(showName: String!): Show
     getNotifications: [ShowNotification]
     askWattson(prompt: String!, previousResponseId: String): AskWattson
     getWattsonResponse(responseId: String!): WattsonResponse
     getWattsonFeedback(filterBy: String): [Wattson]
+    adminImpersonateShow(showSubdomain: String!): Show
 }

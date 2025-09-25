@@ -14,12 +14,12 @@ public interface ShowRepository extends MongoRepository<Show, String> {
     void deleteByShowToken(String showToken);
     Optional<Show> findByShowToken(String showToken);
     Optional<Show> findByShowSubdomain(String showSubdomain);
+    Optional<Show> findByShowName(String showName);
     Optional<Show> findByEmailOrShowSubdomain(String email, String showSubdomain);
     Optional<Show> findByEmailIgnoreCase(String email);
     Optional<Show> findByPasswordResetLinkAndPasswordResetExpiryGreaterThan(String passwordResetLink, LocalDateTime passwordResetExpiry);
     List<Show> findByPreferencesNotificationPreferencesEnableFppHeartbeatIsTrueAndLastFppHeartbeatBefore(LocalDateTime lastFppHeartbeat);
-
-
+    List<Show> findTop10ByShowNameContainingIgnoreCase(String showName);
 
     @Query("{ 'preferences.showOnMap' : true }")
     List<Show> getShowsOnMap();
