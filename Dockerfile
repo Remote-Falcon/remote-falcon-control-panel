@@ -1,9 +1,9 @@
-FROM public.ecr.aws/docker/library/maven:3-eclipse-temurin-17 AS build
+FROM maven:3-openjdk-17-slim AS build
 COPY src /usr/src/app/src
 COPY pom.xml /usr/src/app
 RUN mvn -f /usr/src/app/pom.xml clean package
 
-FROM public.ecr.aws/docker/library/openjdk:17-jdk-slim
+FROM openjdk:17-oracle
 COPY --from=build /usr/src/app/target/remote-falcon-control-panel.jar /usr/app/remote-falcon-control-panel.jar
 EXPOSE 8080
 
