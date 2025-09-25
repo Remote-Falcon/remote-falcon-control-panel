@@ -11,5 +11,5 @@ type Query {
     askWattson(prompt: String!, previousResponseId: String): AskWattson
     getWattsonResponse(responseId: String!): WattsonResponse
     getWattsonFeedback(filterBy: String): [Wattson]
-    adminImpersonateShow(showSubdomain: String!): Show
+    impersonateShow(showSubdomain: String!): Show
 }

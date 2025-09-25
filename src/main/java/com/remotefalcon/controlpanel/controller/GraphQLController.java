@@ -214,8 +214,8 @@ public class GraphQLController {
 
     @QueryMapping
     @RequiresAdminAccess
-    public Show adminImpersonateShow(@Argument String showSubdomain) {
-        return graphQLQueryService.adminImpersonateShow(showSubdomain);
+    public Show impersonateShow(@Argument String showSubdomain) {
+        return graphQLQueryService.impersonateShow(showSubdomain);
     }
 
     @QueryMapping

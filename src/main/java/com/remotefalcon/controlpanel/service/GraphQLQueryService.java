@@ -94,7 +94,7 @@ public class GraphQLQueryService {
         throw new RuntimeException(StatusResponse.UNAUTHORIZED.name());
     }
 
-    public Show adminImpersonateShow(String showSubdomain) {
+    public Show impersonateShow(String showSubdomain) {
         Optional<Show> optionalShow = this.showRepository.findByShowSubdomain(showSubdomain);
         if (optionalShow.isEmpty()) {
             throw new RuntimeException(StatusResponse.SHOW_NOT_FOUND.name());
