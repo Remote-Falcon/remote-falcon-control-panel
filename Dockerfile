@@ -1,9 +1,9 @@
-FROM maven:3-openjdk-17-slim AS build
+FROM ghcr.io/library/maven:3-eclipse-temurin-17 AS build
 COPY src /usr/src/app/src
 COPY pom.xml /usr/src/app
 RUN mvn -f /usr/src/app/pom.xml clean package
 
-FROM eclipse-temurin:17-jre
+FROM ghcr.io/library/eclipse-temurin:17-jre
 COPY --from=build /usr/src/app/target/remote-falcon-control-panel.jar /usr/app/remote-falcon-control-panel.jar
 EXPOSE 8080
 
