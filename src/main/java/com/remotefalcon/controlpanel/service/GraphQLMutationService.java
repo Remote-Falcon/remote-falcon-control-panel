@@ -5,6 +5,7 @@ import com.remotefalcon.controlpanel.repository.NotificationRepository;
 import com.remotefalcon.controlpanel.repository.ShowRepository;
 import com.remotefalcon.controlpanel.repository.WattsonRepository;
 import com.remotefalcon.controlpanel.util.AuthUtil;
+import com.remotefalcon.controlpanel.util.ClientUtil;
 import com.remotefalcon.controlpanel.util.EmailUtil;
 import com.remotefalcon.controlpanel.util.RandomUtil;
 import com.remotefalcon.library.documents.Notification;
@@ -39,6 +40,7 @@ public class GraphQLMutationService {
     private final NotificationRepository notificationRepository;
     private final WattsonRepository wattsonRepository;
     private final HttpServletRequest httpServletRequest;
+    private final ClientUtil clientUtil;
 
     @Value("${auto-validate-email}")
     Boolean autoValidateEmail;
@@ -46,6 +48,7 @@ public class GraphQLMutationService {
     public Boolean signUp(String firstName, String lastName, String showName) {
         String showSubdomain = showName.replaceAll("\\s", "").toLowerCase();
         String[] basicAuthCredentials = this.authUtil.getBasicAuthCredentials(httpServletRequest);
+        String ipAddress = this.clientUtil.getClientIp(httpServletRequest);
         if (basicAuthCredentials != null) {
             String email = basicAuthCredentials[0];
             String password = basicAuthCredentials[1];
@@ -58,7 +61,7 @@ public class GraphQLMutationService {
             String hashedPassword = passwordEncoder.encode(password);
 
             Show newShow = this.createDefaultShowDocument(firstName, lastName, showName, email,
-                    hashedPassword, showToken, showSubdomain);
+                    hashedPassword, showToken, showSubdomain, ipAddress);
 
             if(!autoValidateEmail) {
                 MailerSendResponse emailResponse = this.emailUtil.sendSignUpEmail(newShow);
@@ -75,7 +78,7 @@ public class GraphQLMutationService {
 
     private Show createDefaultShowDocument(String firstName, String lastName, String showName,
                                            String email, String password, String showToken,
-                                           String showSubdomain) {
+                                           String showSubdomain, String ipAddress) {
         return Show.builder()
                 .showToken(showToken)
                 .email(email)
@@ -91,6 +94,7 @@ public class GraphQLMutationService {
                 .emailVerified(this.autoValidateEmail)
                 .createdDate(LocalDateTime.now())
                 .lastLoginDate(LocalDateTime.now())
+                .lastLoginIp(ipAddress)
                 .expireDate(LocalDateTime.now().plusYears(2))
                 .showRole(ShowRole.USER)
                 .preferences(Preference.builder()
