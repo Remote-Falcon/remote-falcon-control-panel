@@ -12,6 +12,6 @@ public class ScheduledTaskController {
 
     @Scheduled(cron = "0 * * * * *")
     public void runTask() {
-        scheduledTaskService.fppHeartbeatTask();
+        // scheduledTaskService.fppHeartbeatTask();
     }
 }
