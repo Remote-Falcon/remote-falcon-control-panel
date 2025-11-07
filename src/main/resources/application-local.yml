@@ -8,5 +8,3 @@ client:
   header: "CF-Connecting-IP"
 
 auto-validate-email: true
-
-wattson.max_output_tokens: 4096

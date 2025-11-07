@@ -344,18 +344,19 @@ public class GraphQLQueryService {
                 .type(JsonValue.from("file_search"))
                 .build();
 
-        String prettyPreferences = this.getPrettyPreferences(show.get().getPreferences());
-        String userPreferences = "Here are the show settings specific to this user: " + prettyPreferences;
-        String completeInstructions = WATTSON_INSTRUCTIONS + "\n\n" + userPreferences;
+        String completeInstructions = WATTSON_INSTRUCTIONS;
 
         ResponseCreateParams.Builder responseCreateParamsBuilder = ResponseCreateParams.builder()
                 .input(prompt)
                 .model(ChatModel.of(openaiModel))
                 .addTool(fileSearchTool)
-                .maxOutputTokens(wattsonMaxOutputTokens)
                 .temperature(1.0)
                 .topP(1.0)
                 .instructions(completeInstructions);
+
+        if (wattsonMaxOutputTokens != null && wattsonMaxOutputTokens > 0) {
+            responseCreateParamsBuilder.maxOutputTokens(wattsonMaxOutputTokens);
+        }
 
         if(StringUtils.isNotEmpty(previousResponseId)) {
             responseCreateParamsBuilder.previousResponseId(previousResponseId);
@@ -373,58 +374,6 @@ public class GraphQLQueryService {
                 .forEach(outputText -> responseBuilder.text(outputText.text()));
 
         return responseBuilder.build();
-    }
-
-    private String getPrettyPreferences(Preference preference) {
-        if (preference == null) {
-            return "";
-        }
-
-        java.util.List<String> pairs = new java.util.ArrayList<>();
-
-        // Top-level preferences (user-friendly labels)
-        addPair(pairs, "Viewer Control Enabled", preference.getViewerControlEnabled());
-        addPair(pairs, "Viewer Page View Only", preference.getViewerPageViewOnly());
-        addPair(pairs, "Viewer Control Mode", preference.getViewerControlMode());
-        addPair(pairs, "Jukebox Depth", preference.getJukeboxDepth());
-        addPair(pairs, "Jukebox Request Limit", preference.getJukeboxRequestLimit());
-        addPair(pairs, "Check If Voted", preference.getCheckIfVoted());
-        addPair(pairs, "Check If Requested", preference.getCheckIfRequested());
-        addPair(pairs, "PSA Enabled", preference.getPsaEnabled());
-        addPair(pairs, "PSA Frequency", preference.getPsaFrequency());
-        addPair(pairs, "Location Check Method", preference.getLocationCheckMethod());
-        addPair(pairs, "Show Latitude", preference.getShowLatitude());
-        addPair(pairs, "Show Longitude", preference.getShowLongitude());
-        addPair(pairs, "Allowed Radius", preference.getAllowedRadius());
-        addPair(pairs, "Location Code", preference.getLocationCode());
-        addPair(pairs, "Hide Sequence Count", preference.getHideSequenceCount());
-        addPair(pairs, "Show On Map", preference.getShowOnMap());
-
-        if (preference.getBlockedViewerIps() != null && !preference.getBlockedViewerIps().isEmpty()) {
-            addPair(pairs, "Blocked Viewer IPs", String.join("|", preference.getBlockedViewerIps()));
-        }
-
-        // Notification preferences (nested)
-        NotificationPreference np = preference.getNotificationPreferences();
-        if (np != null) {
-            addPair(pairs, "Enable FPP Heartbeat", np.getEnableFppHeartbeat());
-            addPair(pairs, "FPP Heartbeat If Control Enabled", np.getFppHeartbeatIfControlEnabled());
-            addPair(pairs, "FPP Heartbeat Renotify After Minutes", np.getFppHeartbeatRenotifyAfterMinutes());
-        }
-
-        return String.join(", ", pairs);
-    }
-
-    private void addPair(java.util.List<String> pairs, String key, Object value) {
-        if (value == null) return;
-        if (value instanceof String s) {
-            if (org.apache.commons.lang3.StringUtils.isBlank(s)) return;
-            pairs.add(key + "=" + s);
-        } else if (value instanceof java.lang.Boolean b) {
-            pairs.add(key + "=" + (b ? "true" : "false"));
-        } else {
-            pairs.add(key + "=" + String.valueOf(value));
-        }
     }
 
     public List<Wattson> getWattsonFeedback(String filterBy) {
