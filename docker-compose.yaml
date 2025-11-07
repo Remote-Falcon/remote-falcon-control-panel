@@ -1,0 +1,22 @@
+services:
+  mongo:
+    image: mongo
+    restart: always
+    volumes:
+      - D:\Development\remote-falcon\mongo-volume:/data/db #Update the path before the : to a valid path on your machine
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+  control-panel:
+    build:
+      context: .
+      args:
+        - OTEL_OPTS=
+    restart: always
+    ports:
+      - "8081:8081"
+      - "8001:8001"
+    environment:
+      - "JAVA_OPTS=-Dserver.port=8081 -Dweb.url=http://localhost:3000 -Dauto-validate-email=true -Djwt.user=123456 -Dspring.data.mongodb.uri=mongodb://root:root@mongo:27017/remote-falcon?authSource=admin -Dgithub.pat= -Dsendgrid.key= -Dclient.header=CF-Connecting-IP -Ds3.endpoint=http://localhost -Ds3.accessKey= -Ds3.secretKey= -Dwattson.endpoint= -Dwattson.key="
+    depends_on:
+      - mongo
