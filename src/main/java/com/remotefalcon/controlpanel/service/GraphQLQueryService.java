@@ -198,136 +198,137 @@ public class GraphQLQueryService {
     }
 
     public List<ShowNotification> getNotifications() {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
-        if (show.isEmpty()) {
-            throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
-        }
+      return List.of(); // Temporarily disable notifications
+        // Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        // if (show.isEmpty()) {
+        //     throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
+        // }
 
-        Show existingShow = show.get();
+        // Show existingShow = show.get();
 
-        // Source of truth: repository notifications
-        List<Notification> repoNotifications = Optional.ofNullable(this.notificationRepository.findAll())
-                .orElse(Collections.emptyList());
+        // // Source of truth: repository notifications
+        // List<Notification> repoNotifications = Optional.ofNullable(this.notificationRepository.findAll())
+        //         .orElse(Collections.emptyList());
 
-        // User's current notification states (read/deleted)
-        List<ShowNotification> userNotifs = Optional.ofNullable(existingShow.getShowNotifications())
-                .orElseGet(ArrayList::new);
+        // // User's current notification states (read/deleted)
+        // List<ShowNotification> userNotifs = Optional.ofNullable(existingShow.getShowNotifications())
+        //         .orElseGet(ArrayList::new);
 
-        // Index user's notifications by UUID (null-safe)
-        Map<String, ShowNotification> userByUuid = new HashMap<>();
-        for (ShowNotification sn : userNotifs) {
-            if (sn == null) continue;
-            NotificationModel n = sn.getNotification();
-            String uuid = (n == null) ? null : n.getUuid();
-            if (uuid != null) {
-                userByUuid.put(uuid, sn);
-            }
-        }
+        // // Index user's notifications by UUID (null-safe)
+        // Map<String, ShowNotification> userByUuid = new HashMap<>();
+        // for (ShowNotification sn : userNotifs) {
+        //     if (sn == null) continue;
+        //     NotificationModel n = sn.getNotification();
+        //     String uuid = (n == null) ? null : n.getUuid();
+        //     if (uuid != null) {
+        //         userByUuid.put(uuid, sn);
+        //     }
+        // }
 
-        List<ShowNotification> merged = new ArrayList<>();
+        // List<ShowNotification> merged = new ArrayList<>();
 
-        for (Notification repoNotif : repoNotifications) {
-            if (repoNotif == null || repoNotif.getUuid() == null) continue;
-            ShowNotification userSN = userByUuid.remove(repoNotif.getUuid());
+        // for (Notification repoNotif : repoNotifications) {
+        //     if (repoNotif == null || repoNotif.getUuid() == null) continue;
+        //     ShowNotification userSN = userByUuid.remove(repoNotif.getUuid());
 
-            if (userSN == null) {
-                // New to user → add default state
-                merged.add(ShowNotification.builder()
-                        .notification(NotificationModel.builder()
-                          .type(repoNotif.getType())
-                          .uuid(repoNotif.getUuid())
-                          .createdDate(repoNotif.getCreatedDate())
-                          .message(repoNotif.getMessage())
-                          .preview(repoNotif.getPreview())
-                          .subject(repoNotif.getSubject())
-                          .build())
-                        .read(false)
-                        .deleted(false)
-                        .build());
-                continue;
-            }
+        //     if (userSN == null) {
+        //         // New to user → add default state
+        //         merged.add(ShowNotification.builder()
+        //                 .notification(NotificationModel.builder()
+        //                   .type(repoNotif.getType())
+        //                   .uuid(repoNotif.getUuid())
+        //                   .createdDate(repoNotif.getCreatedDate())
+        //                   .message(repoNotif.getMessage())
+        //                   .preview(repoNotif.getPreview())
+        //                   .subject(repoNotif.getSubject())
+        //                   .build())
+        //                 .read(false)
+        //                 .deleted(false)
+        //                 .build());
+        //         continue;
+        //     }
 
-            // Existing in both places: honor user's deleted/read flags
-            if (Boolean.TRUE.equals(userSN.getDeleted())) {
-                NotificationType type = repoNotif.getType();
-                // For ADMIN notifications: keep the deleted record so it is not re-added on next calls
-                if (type == NotificationType.ADMIN) {
-                    userSN.setNotification(NotificationModel.builder()
-                          .type(repoNotif.getType())
-                          .uuid(repoNotif.getUuid())
-                          .createdDate(repoNotif.getCreatedDate())
-                          .message(repoNotif.getMessage())
-                          .preview(repoNotif.getPreview())
-                          .subject(repoNotif.getSubject())
-                          .build());
-                    merged.add(userSN); // remains deleted; excluded from returned list but preserved in DB
-                }
-                // For USER and FPP_HEALTH: drop it completely
-                continue;
-            }
+        //     // Existing in both places: honor user's deleted/read flags
+        //     if (Boolean.TRUE.equals(userSN.getDeleted())) {
+        //         NotificationType type = repoNotif.getType();
+        //         // For ADMIN notifications: keep the deleted record so it is not re-added on next calls
+        //         if (type == NotificationType.ADMIN) {
+        //             userSN.setNotification(NotificationModel.builder()
+        //                   .type(repoNotif.getType())
+        //                   .uuid(repoNotif.getUuid())
+        //                   .createdDate(repoNotif.getCreatedDate())
+        //                   .message(repoNotif.getMessage())
+        //                   .preview(repoNotif.getPreview())
+        //                   .subject(repoNotif.getSubject())
+        //                   .build());
+        //             merged.add(userSN); // remains deleted; excluded from returned list but preserved in DB
+        //         }
+        //         // For USER and FPP_HEALTH: drop it completely
+        //         continue;
+        //     }
 
-            // Keep, but update the master Notification details
-            userSN.setNotification(NotificationModel.builder()
-                          .type(repoNotif.getType())
-                          .uuid(repoNotif.getUuid())
-                          .createdDate(repoNotif.getCreatedDate())
-                          .message(repoNotif.getMessage())
-                          .preview(repoNotif.getPreview())
-                          .subject(repoNotif.getSubject())
-                          .build());
-            // If marked read by user, keep it; otherwise leave as-is (default false)
-            userSN.setRead(Boolean.TRUE.equals(userSN.getRead()));
-            merged.add(userSN);
-        }
+        //     // Keep, but update the master Notification details
+        //     userSN.setNotification(NotificationModel.builder()
+        //                   .type(repoNotif.getType())
+        //                   .uuid(repoNotif.getUuid())
+        //                   .createdDate(repoNotif.getCreatedDate())
+        //                   .message(repoNotif.getMessage())
+        //                   .preview(repoNotif.getPreview())
+        //                   .subject(repoNotif.getSubject())
+        //                   .build());
+        //     // If marked read by user, keep it; otherwise leave as-is (default false)
+        //     userSN.setRead(Boolean.TRUE.equals(userSN.getRead()));
+        //     merged.add(userSN);
+        // }
 
-        // Add any remaining user-only notifications (repo no longer has them)
-        for (ShowNotification leftover : userByUuid.values()) {
-            if (leftover == null) continue;
-            NotificationModel ln = leftover.getNotification();
-            NotificationType lt = ln == null ? null : ln.getType();
+        // // Add any remaining user-only notifications (repo no longer has them)
+        // for (ShowNotification leftover : userByUuid.values()) {
+        //     if (leftover == null) continue;
+        //     NotificationModel ln = leftover.getNotification();
+        //     NotificationType lt = ln == null ? null : ln.getType();
 
-            // If an ADMIN notification no longer exists in the repo,
-            // delete it completely from the user's notifications (do not add to merged).
-            if (lt == NotificationType.ADMIN) {
-                continue;
-            }
+        //     // If an ADMIN notification no longer exists in the repo,
+        //     // delete it completely from the user's notifications (do not add to merged).
+        //     if (lt == NotificationType.ADMIN) {
+        //         continue;
+        //     }
 
-            // For USER and FPP_HEALTH: keep if not deleted
-            if (!Boolean.TRUE.equals(leftover.getDeleted())) {
-                merged.add(leftover);
-            }
-        }
+        //     // For USER and FPP_HEALTH: keep if not deleted
+        //     if (!Boolean.TRUE.equals(leftover.getDeleted())) {
+        //         merged.add(leftover);
+        //     }
+        // }
 
-        // Cleanup: age-out old FPP_HEALTH notifications and enforce deleted flag removal
-        LocalDateTime cutoff = LocalDateTime.now().minusDays(1);
-        merged.removeIf(sn -> {
-            if (sn == null) return true; // drop null entries defensively
-            NotificationModel n = sn.getNotification();
-            NotificationType type = (n == null) ? null : n.getType();
-            LocalDateTime created = (n == null) ? null : n.getCreatedDate();
+        // // Cleanup: age-out old FPP_HEALTH notifications and enforce deleted flag removal
+        // LocalDateTime cutoff = LocalDateTime.now().minusDays(1);
+        // merged.removeIf(sn -> {
+        //     if (sn == null) return true; // drop null entries defensively
+        //     NotificationModel n = sn.getNotification();
+        //     NotificationType type = (n == null) ? null : n.getType();
+        //     LocalDateTime created = (n == null) ? null : n.getCreatedDate();
 
-            // Remove if user marked deleted: only for USER and FPP_HEALTH
-            if (Boolean.TRUE.equals(sn.getDeleted())) {
-                return type == NotificationType.USER || type == NotificationType.FPP_HEALTH;
-            }
+        //     // Remove if user marked deleted: only for USER and FPP_HEALTH
+        //     if (Boolean.TRUE.equals(sn.getDeleted())) {
+        //         return type == NotificationType.USER || type == NotificationType.FPP_HEALTH;
+        //     }
 
-            // Remove stale health notifications
-            return type == NotificationType.FPP_HEALTH && created != null && created.isBefore(cutoff);
-        });
+        //     // Remove stale health notifications
+        //     return type == NotificationType.FPP_HEALTH && created != null && created.isBefore(cutoff);
+        // });
 
-        // Persist merged state on user
-        existingShow.setShowNotifications(merged);
-        this.showRepository.save(existingShow);
+        // // Persist merged state on user
+        // existingShow.setShowNotifications(merged);
+        // this.showRepository.save(existingShow);
 
-        // Return non-deleted sorted by createdDate desc (nulls last)
-        return merged.stream()
-                .filter(sn -> sn != null && !Boolean.TRUE.equals(sn.getDeleted()))
-                .sorted(Comparator.comparing(
-                        (ShowNotification sn) -> Optional.ofNullable(sn.getNotification())
-                                .map(NotificationModel::getCreatedDate)
-                                .orElse(null),
-                        Comparator.nullsLast(Comparator.reverseOrder())))
-                .toList();
+        // // Return non-deleted sorted by createdDate desc (nulls last)
+        // return merged.stream()
+        //         .filter(sn -> sn != null && !Boolean.TRUE.equals(sn.getDeleted()))
+        //         .sorted(Comparator.comparing(
+        //                 (ShowNotification sn) -> Optional.ofNullable(sn.getNotification())
+        //                         .map(NotificationModel::getCreatedDate)
+        //                         .orElse(null),
+        //                 Comparator.nullsLast(Comparator.reverseOrder())))
+        //         .toList();
     }
 
     public AskWattson askWattson(String prompt, String previousResponseId) {
