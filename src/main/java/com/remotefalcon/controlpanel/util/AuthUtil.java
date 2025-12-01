@@ -31,7 +31,7 @@ public class AuthUtil {
   @Value("${jwt.user}")
   String jwtSignKey;
 
-  public TokenDTO tokenDTO;
+  private final ThreadLocal<TokenDTO> tokenHolder = new ThreadLocal<>();
 
   public String signJwt(Show show) {
     Map<String, Object> jwtPayload = new HashMap<String, Object>();
@@ -57,13 +57,14 @@ public class AuthUtil {
     try {
       DecodedJWT decodedJWT = JWT.decode(token);
       Map<String, Object> userDataMap = decodedJWT.getClaim("user-data").asMap();
-      return TokenDTO.builder()
+      TokenDTO tokenDTO = TokenDTO.builder()
               .showToken((String) userDataMap.get("showToken"))
               .email((String) userDataMap.get("email"))
               .showSubdomain((String) userDataMap.get("showSubdomain"))
               .showRole(ShowRole.valueOf((String) userDataMap.get("showRole")))
               .token(token)
               .build();
+      return setTokenDTO(tokenDTO);
     }catch (JWTDecodeException jde) {
       throw new RuntimeException(StatusResponse.INVALID_JWT.name());
     }
@@ -78,7 +79,7 @@ public class AuthUtil {
       Algorithm algorithm = Algorithm.HMAC256(jwtSignKey);
       JWTVerifier verifier = JWT.require(algorithm).withIssuer("remotefalcon").build();
       verifier.verify(token);
-      this.tokenDTO = getJwtPayload();
+      setTokenDTO(getJwtPayload());
       return true;
     } catch (JWTVerificationException e) {
       throw new RuntimeException(StatusResponse.INVALID_JWT.name());
@@ -94,7 +95,7 @@ public class AuthUtil {
       Algorithm algorithm = Algorithm.HMAC256(jwtSignKey);
       JWTVerifier verifier = JWT.require(algorithm).withIssuer("remotefalcon").build();
       verifier.verify(token);
-      TokenDTO tokenDTO = this.tokenDTO = getJwtPayload();
+      TokenDTO tokenDTO = setTokenDTO(getJwtPayload());
       return tokenDTO.getShowRole() == ShowRole.ADMIN;
     } catch (JWTVerificationException e) {
       throw new RuntimeException(StatusResponse.INVALID_JWT.name());
@@ -140,5 +141,22 @@ public class AuthUtil {
       return new String(Base64.getDecoder().decode(password));
     }
     return null;
+  }
+
+  public TokenDTO getTokenDTO() {
+    TokenDTO tokenDTO = tokenHolder.get();
+    if(tokenDTO == null) {
+      throw new RuntimeException(StatusResponse.INVALID_JWT.name());
+    }
+    return tokenDTO;
+  }
+
+  public TokenDTO setTokenDTO(TokenDTO tokenDTO) {
+    tokenHolder.set(tokenDTO);
+    return tokenDTO;
+  }
+
+  public void clearTokenDTO() {
+    tokenHolder.remove();
   }
 }

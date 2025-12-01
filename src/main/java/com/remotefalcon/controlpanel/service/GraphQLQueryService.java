@@ -145,7 +145,7 @@ public class GraphQLQueryService {
     }
 
     public Show getShow() {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isPresent()) {
             show.get().setLastLoginDate(LocalDateTime.now());
             checkPsaSequences(show.get());
@@ -199,7 +199,7 @@ public class GraphQLQueryService {
 
     public List<ShowNotification> getNotifications() {
       return List.of(); // Temporarily disable notifications
-        // Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        // Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         // if (show.isEmpty()) {
         //     throw new RuntimeException(StatusResponse.UNEXPECTED_ERROR.name());
         // }
@@ -332,7 +332,7 @@ public class GraphQLQueryService {
     }
 
     public AskWattson askWattson(String prompt, String previousResponseId) {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isEmpty()) {
             return null;
         }

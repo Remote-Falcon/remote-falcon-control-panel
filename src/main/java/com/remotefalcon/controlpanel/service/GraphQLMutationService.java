@@ -183,7 +183,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean resetPassword() {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isEmpty()) {
             throw new RuntimeException(StatusResponse.UNAUTHORIZED.name());
         }
@@ -201,7 +201,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean updatePassword() {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isPresent()) {
             String password = this.authUtil.getPasswordFromHeader(httpServletRequest);
             String updatedPassword = this.authUtil.getUpdatedPasswordFromHeader(httpServletRequest);
@@ -222,7 +222,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean updateUserProfile(UserProfile userProfile) {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isPresent()) {
             show.get().setUserProfile(userProfile);
             if(show.get().getUserProfile().getExpoPushToken() != null) {
@@ -235,7 +235,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean updateExpoPushToken(String expoPushToken) {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isPresent()) {
             show.get().getUserProfile().setExpoPushToken(expoPushToken);
             this.showRepository.save(show.get());
@@ -245,7 +245,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean requestApiAccess() {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isPresent()) {
             if(show.get().getApiAccess() == null) {
                 show.get().setApiAccess(ApiAccess.builder()
@@ -275,12 +275,12 @@ public class GraphQLMutationService {
     }
 
     public Boolean deleteAccount() {
-        this.showRepository.deleteByShowToken(authUtil.tokenDTO.getShowToken());
+        this.showRepository.deleteByShowToken(authUtil.getTokenDTO().getShowToken());
         return true;
     }
 
     public Boolean updateShow(String email, String showName) {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isPresent()) {
             boolean changesMade = false;
             if(!StringUtils.equalsIgnoreCase(show.get().getEmail(), email)) {
@@ -313,7 +313,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean updatePreferences(Preference preferences) {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isPresent()) {
             if(preferences.getViewerControlEnabled() != show.get().getPreferences().getViewerControlEnabled()) {
                 preferences.setSequencesPlayed(0);
@@ -326,7 +326,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean updatePages(List<ViewerPage> pages) {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isPresent()) {
             show.get().setPages(pages);
             this.showRepository.save(show.get());
@@ -336,7 +336,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean updatePsaSequences(List<PsaSequence> psaSequences) {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isPresent()) {
             show.get().setPsaSequences(psaSequences);
             this.showRepository.save(show.get());
@@ -346,7 +346,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean updateSequences(List<Sequence> sequences) {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isPresent()) {
             Set<Sequence> sequencesSet = new HashSet<>(sequences);
             show.get().setSequences(sequencesSet.stream().toList());
@@ -357,7 +357,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean updateSequenceGroups(List<SequenceGroup> sequenceGroups) {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isPresent()) {
             show.get().setSequenceGroups(sequenceGroups);
             this.showRepository.save(show.get());
@@ -367,7 +367,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean playSequenceFromControlPanel(Sequence sequence) {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isPresent()) {
             if(show.get().getPreferences().getViewerControlMode() == ViewerControlMode.JUKEBOX) {
                 boolean hasOwnerRequest = show.get().getRequests().stream()
@@ -400,7 +400,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean deleteSingleRequest(Integer position) {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isPresent()) {
             List<Request> updatedRequests = show.get().getRequests().stream()
                     .filter(request -> !Objects.equals(request.getPosition(), position))
@@ -423,7 +423,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean deleteNowPlaying() {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isPresent()) {
             show.get().setPlayingNow("");
             show.get().setPlayingNext("");
@@ -435,7 +435,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean purgeStats() {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isPresent()) {
             LocalDateTime purgeStatsDate = LocalDateTime.now().minusMonths(18);
 
@@ -451,7 +451,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean deleteStatsWithinRange(Long startDate, Long endDate, String timezone) {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isEmpty()) {
             throw new RuntimeException(StatusResponse.SHOW_NOT_FOUND.name());
         }
@@ -469,7 +469,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean resetAllVotes() {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isPresent()) {
             show.get().setVotes(new ArrayList<>());
             Set<Sequence> sequenceSet = show.get().getSequences().stream()
@@ -494,7 +494,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean deleteAllRequests() {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isPresent()) {
             show.get().setRequests(new ArrayList<>());
             Set<Sequence> sequenceSet = show.get().getSequences().stream()
@@ -509,7 +509,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean markNotificationsAsRead(List<String> uuids) {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isPresent()) {
             Show existingShow = show.get();
             Optional.ofNullable(existingShow.getShowNotifications())
@@ -526,7 +526,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean deleteNotificationForUser(String uuid) {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isPresent()) {
             Show existingShow = show.get();
             Optional.ofNullable(existingShow.getShowNotifications())
@@ -588,7 +588,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean wattsonFeedback(String responseId, String feedback) {
-        Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+        Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isEmpty()) {
             return false;
         }

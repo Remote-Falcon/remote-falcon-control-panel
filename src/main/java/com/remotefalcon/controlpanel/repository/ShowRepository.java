@@ -21,6 +21,7 @@ public interface ShowRepository extends MongoRepository<Show, String> {
     List<Show> findByPreferencesNotificationPreferencesEnableFppHeartbeatIsTrueAndLastFppHeartbeatBefore(LocalDateTime lastFppHeartbeat);
     List<Show> findTop10ByShowNameContainingIgnoreCase(String showName);
 
-    @Query("{ 'preferences.showOnMap' : true }")
+    @Query(value = "{ 'preferences.showOnMap' : true }",
+            fields = "{ 'showName': 1, 'preferences.showLatitude': 1, 'preferences.showLongitude': 1, 'preferences.showOnMap': 1 }")
     List<Show> getShowsOnMap();
 }
