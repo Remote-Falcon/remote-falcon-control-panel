@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -79,6 +80,7 @@ public class GraphQLMutationService {
     private Show createDefaultShowDocument(String firstName, String lastName, String showName,
                                            String email, String password, String showToken,
                                            String showSubdomain, String ipAddress) {
+        String defaultPageHtml = Optional.ofNullable(this.fetchDefaultPageHtml()).orElse("");
         return Show.builder()
                 .showToken(showToken)
                 .email(email)
@@ -113,6 +115,7 @@ public class GraphQLMutationService {
                         .makeItSnow(false)
                         .managePsa(false)
                         .sequencesPlayed(0)
+                        .pageTitle(showName)
                         .build())
                 .requests(new ArrayList<>())
                 .stats(Stat.builder()
@@ -121,11 +124,26 @@ public class GraphQLMutationService {
                         .voting(new ArrayList<>())
                         .votingWin(new ArrayList<>())
                         .build())
-                .pages(new ArrayList<>())
+                .pages(new ArrayList<>(Collections.singletonList(ViewerPage.builder()
+                        .name("Default")
+                        .active(true)
+                        .html(defaultPageHtml)
+                        .build())))
                 .sequences(new ArrayList<>())
                 .sequenceGroups(new ArrayList<>())
                 .psaSequences(new ArrayList<>())
                 .build();
+    }
+
+    private String fetchDefaultPageHtml() {
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            return restTemplate.getForObject(
+                    "https://raw.githubusercontent.com/Remote-Falcon/remote-falcon-page-templates/main/templates/the-og.html",
+                    String.class);
+        } catch (Exception ex) {
+            return "";
+        }
     }
 
     private String validateShowToken(String showToken) {
