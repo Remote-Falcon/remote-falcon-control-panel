@@ -72,7 +72,7 @@ public class ControlPanelService {
   }
 
   public ResponseEntity<String> uploadImage(MultipartFile file) {
-    Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+    Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
     if(show.isEmpty()) {
       throw new RuntimeException(StatusResponse.SHOW_NOT_FOUND.name());
     }
@@ -93,7 +93,7 @@ public class ControlPanelService {
   }
 
   public ResponseEntity<Boolean> downloadImage(String image) {
-    Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+    Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
     if(show.isEmpty()) {
       throw new RuntimeException(StatusResponse.SHOW_NOT_FOUND.name());
     }
@@ -104,7 +104,7 @@ public class ControlPanelService {
   }
 
   public ResponseEntity<String> deleteImage(String image) {
-    Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+    Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
     if(show.isEmpty()) {
       throw new RuntimeException(StatusResponse.SHOW_NOT_FOUND.name());
     }
@@ -115,7 +115,7 @@ public class ControlPanelService {
   }
 
   public ResponseEntity<List<S3Image>> getImages() {
-    Optional<Show> show = this.showRepository.findByShowToken(authUtil.tokenDTO.getShowToken());
+    Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
     if(show.isEmpty()) {
       throw new RuntimeException(StatusResponse.SHOW_NOT_FOUND.name());
     }

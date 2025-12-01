@@ -21,18 +21,26 @@ public class AccessAspect {
   @Around("@annotation(RequiresAccess)")
   public Object isJwtValid(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
     HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-    if(this.authUtil.isJwtValid(request)) {
-      return proceedingJoinPoint.proceed();
+    try {
+      if(this.authUtil.isJwtValid(request)) {
+        return proceedingJoinPoint.proceed();
+      }
+      throw new RuntimeException(StatusResponse.INVALID_JWT.name());
+    } finally {
+      this.authUtil.clearTokenDTO();
     }
-    throw new RuntimeException(StatusResponse.INVALID_JWT.name());
   }
 
   @Around("@annotation(RequiresAdminAccess)")
   public Object isAdminJwtValid(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
     HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-    if(this.authUtil.isAdminJwtValid(request)) {
-      return proceedingJoinPoint.proceed();
+    try {
+      if(this.authUtil.isAdminJwtValid(request)) {
+        return proceedingJoinPoint.proceed();
+      }
+      throw new RuntimeException(StatusResponse.INVALID_JWT.name());
+    } finally {
+      this.authUtil.clearTokenDTO();
     }
-    throw new RuntimeException(StatusResponse.INVALID_JWT.name());
   }
 }
