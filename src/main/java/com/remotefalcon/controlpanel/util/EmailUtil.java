@@ -1,6 +1,5 @@
 package com.remotefalcon.controlpanel.util;
 
-import com.mailersend.sdk.Recipient;
 import com.mailersend.sdk.emails.Email;
 import com.mailersend.sdk.MailerSend;
 import com.mailersend.sdk.MailerSendResponse;
@@ -27,11 +26,6 @@ public class EmailUtil {
   public MailerSendResponse sendSignUpEmail(Show show) {
     Email email = new Email();
     email.addRecipient(show.getShowName(), show.getEmail());
-
-    Recipient bcc = new Recipient();
-    bcc.email = mailFrom;
-    bcc.name = "Remote Falcon";
-    email.bcc.add(bcc);
 
     email.setTemplateId("3z0vklojo3eg7qrx");
     email.setSubject("Welcome to Remote Falcon!");
