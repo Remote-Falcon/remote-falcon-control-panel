@@ -1,7 +1,9 @@
 package com.remotefalcon.controlpanel.repository;
 
 import com.remotefalcon.library.documents.Show;
+import com.remotefalcon.library.models.Sequence;
 import jakarta.transaction.Transactional;
+import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
@@ -24,4 +26,13 @@ public interface ShowRepository extends MongoRepository<Show, String> {
     @Query(value = "{ 'preferences.showOnMap' : true }",
             fields = "{ 'showName': 1, 'preferences.showLatitude': 1, 'preferences.showLongitude': 1, 'preferences.showOnMap': 1 }")
     List<Show> getShowsOnMap();
+
+    @Aggregation(pipeline = {
+            "{ '$match': { 'showToken' : ?0 } }",
+            "{ '$project': { 'sequences' : 1 } }",
+            "{ '$unwind': '$sequences' }",
+            "{ '$replaceRoot': { 'newRoot': '$sequences' } }"
+    })
+    List<Sequence> getSequencesByShowToken(String showToken);
+    
 }

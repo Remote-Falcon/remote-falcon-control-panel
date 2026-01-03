@@ -1,6 +1,8 @@
 package com.remotefalcon.controlpanel.util;
 
 import com.remotefalcon.controlpanel.response.dashboard.DashboardStatsResponse;
+import com.remotefalcon.library.models.Sequence;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.poi.ss.usermodel.*;
@@ -17,11 +19,21 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 @Slf4j
 public class ExcelUtil {
+  public static final List<String> SEQUENCE_CSV_HEADERS = List.of(
+          "name",
+          "displayName",
+          "artist",
+          "group",
+          "imageUrl",
+          "category"
+  );
 
   public ResponseEntity<ByteArrayResource> generateDashboardExcel(DashboardStatsResponse dashboardStats, String timezone) {
     ResponseEntity<ByteArrayResource> response =  ResponseEntity.status(204).build();
@@ -371,5 +383,41 @@ public class ExcelUtil {
 
   private String formatDateColumn(Long date, String timezone) {
     return ZonedDateTime.ofInstant(Instant.ofEpochMilli(date), ZoneId.of(timezone == null ? "America/Chicago" : timezone)).format(DateTimeFormatter.ISO_LOCAL_DATE);
+  }
+
+  public ResponseEntity<ByteArrayResource> generateSequencesExcel(List<Sequence> sequences) {
+    if(sequences == null || sequences.isEmpty()) {
+      return ResponseEntity.status(204).build();
+    }
+
+    StringBuilder csvBuilder = new StringBuilder();
+    csvBuilder.append(String.join(",", SEQUENCE_CSV_HEADERS)).append("\n");
+
+    sequences.forEach(sequence -> csvBuilder.append(String.join(",",
+            escapeCsvValue(sequence.getName()),
+            escapeCsvValue(sequence.getDisplayName()),
+            escapeCsvValue(sequence.getArtist()),
+            escapeCsvValue(sequence.getGroup()),
+            escapeCsvValue(sequence.getImageUrl()),
+            escapeCsvValue(sequence.getCategory())
+    )).append("\n"));
+
+    byte[] csvBytes = csvBuilder.toString().getBytes(StandardCharsets.UTF_8);
+    ByteArrayResource resource = new ByteArrayResource(csvBytes);
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=sequences.csv");
+    httpHeaders.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(csvBytes.length));
+    return ResponseEntity.ok()
+            .headers(httpHeaders)
+            .contentType(MediaType.parseMediaType("text/csv"))
+            .body(resource);
+  }
+
+  private String escapeCsvValue(Object value) {
+    if(value == null) {
+      return "\"\"";
+    }
+    String stringValue = String.valueOf(value).replace("\"", "\"\"");
+    return "\"" + stringValue + "\"";
   }
 }
