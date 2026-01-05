@@ -4,6 +4,7 @@ import com.remotefalcon.controlpanel.response.dashboard.DashboardStatsResponse;
 import com.remotefalcon.library.models.Sequence;
 
 import lombok.extern.slf4j.Slf4j;
+
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFFont;
@@ -20,6 +21,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -27,16 +29,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public class ExcelUtil {
   public static final List<String> SEQUENCE_CSV_HEADERS = List.of(
-          "name",
-          "displayName",
-          "artist",
-          "group",
-          "imageUrl",
-          "category"
-  );
+      "name",
+      "displayName",
+      "artist",
+      "group",
+      "imageUrl",
+      "category");
 
-  public ResponseEntity<ByteArrayResource> generateDashboardExcel(DashboardStatsResponse dashboardStats, String timezone) {
-    ResponseEntity<ByteArrayResource> response =  ResponseEntity.status(204).build();
+  public ResponseEntity<ByteArrayResource> generateDashboardExcel(DashboardStatsResponse dashboardStats,
+      String timezone) {
+    ResponseEntity<ByteArrayResource> response = ResponseEntity.status(204).build();
     Workbook workbook = new XSSFWorkbook();
 
     this.uniquePageVisitsByDate(workbook, dashboardStats, timezone);
@@ -55,7 +57,9 @@ public class ExcelUtil {
       HttpHeaders httpHeaders = new HttpHeaders();
       httpHeaders.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=stats.xlsx");
       httpHeaders.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(out.toByteArray().length));
-      response = ResponseEntity.ok().headers(httpHeaders).contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")).body(resource);
+      response = ResponseEntity.ok().headers(httpHeaders)
+          .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+          .body(resource);
       out.close();
       workbook.close();
     } catch (IOException e) {
@@ -96,9 +100,9 @@ public class ExcelUtil {
       cell = row.createCell(2);
       StringBuilder viewerIpsBuilder = new StringBuilder();
       int viewerIpsIndex = 1;
-      for(String viewer : visit.getViewerIps()) {
+      for (String viewer : visit.getViewerIps()) {
         viewerIpsBuilder.append(viewer);
-        if(visit.getViewerIps().size() > viewerIpsIndex) {
+        if (visit.getViewerIps().size() > viewerIpsIndex) {
           viewerIpsBuilder.append("\r\n");
         }
         viewerIpsIndex++;
@@ -169,9 +173,9 @@ public class ExcelUtil {
       cell = row.createCell(1);
       StringBuilder sequenceRequests = new StringBuilder();
       int sequenceRequestIndex = 1;
-      for(DashboardStatsResponse.SequenceStat sequenceRequest : request.getSequences()) {
+      for (DashboardStatsResponse.SequenceStat sequenceRequest : request.getSequences()) {
         sequenceRequests.append(String.format("%s: %s", sequenceRequest.getName(), sequenceRequest.getTotal()));
-        if(request.getSequences().size() > sequenceRequestIndex) {
+        if (request.getSequences().size() > sequenceRequestIndex) {
           sequenceRequests.append("\r\n");
         }
         sequenceRequestIndex++;
@@ -245,9 +249,9 @@ public class ExcelUtil {
       cell = row.createCell(1);
       StringBuilder sequenceRequests = new StringBuilder();
       int sequenceVoteIndex = 1;
-      for(DashboardStatsResponse.SequenceStat sequenceVote : vote.getSequences()) {
+      for (DashboardStatsResponse.SequenceStat sequenceVote : vote.getSequences()) {
         sequenceRequests.append(String.format("%s: %s", sequenceVote.getName(), sequenceVote.getTotal()));
-        if(vote.getSequences().size() > sequenceVoteIndex) {
+        if (vote.getSequences().size() > sequenceVoteIndex) {
           sequenceRequests.append("\r\n");
         }
         sequenceVoteIndex++;
@@ -321,9 +325,9 @@ public class ExcelUtil {
       cell = row.createCell(1);
       StringBuilder sequenceRequests = new StringBuilder();
       int sequenceVoteIndex = 1;
-      for(DashboardStatsResponse.SequenceStat sequenceWin : win.getSequences()) {
+      for (DashboardStatsResponse.SequenceStat sequenceWin : win.getSequences()) {
         sequenceRequests.append(String.format("%s: %s", sequenceWin.getName(), sequenceWin.getTotal()));
-        if(win.getSequences().size() > sequenceVoteIndex) {
+        if (win.getSequences().size() > sequenceVoteIndex) {
           sequenceRequests.append("\r\n");
         }
         sequenceVoteIndex++;
@@ -382,25 +386,38 @@ public class ExcelUtil {
   }
 
   private String formatDateColumn(Long date, String timezone) {
-    return ZonedDateTime.ofInstant(Instant.ofEpochMilli(date), ZoneId.of(timezone == null ? "America/Chicago" : timezone)).format(DateTimeFormatter.ISO_LOCAL_DATE);
+    return ZonedDateTime
+        .ofInstant(Instant.ofEpochMilli(date), ZoneId.of(timezone == null ? "America/Chicago" : timezone))
+        .format(DateTimeFormatter.ISO_LOCAL_DATE);
   }
 
   public ResponseEntity<ByteArrayResource> generateSequencesExcel(List<Sequence> sequences) {
-    if(sequences == null || sequences.isEmpty()) {
+    if (sequences == null || sequences.isEmpty()) {
       return ResponseEntity.status(204).build();
     }
+
+    sequences.sort((s1, s2) -> {
+      if (s1.getName() == null && s2.getName() == null) {
+        return 0;
+      } else if (s1.getName() == null) {
+        return 1;
+      } else if (s2.getName() == null) {
+        return -1;
+      } else {
+        return s1.getName().compareToIgnoreCase(s2.getName());
+      }
+    });
 
     StringBuilder csvBuilder = new StringBuilder();
     csvBuilder.append(String.join(",", SEQUENCE_CSV_HEADERS)).append("\n");
 
     sequences.forEach(sequence -> csvBuilder.append(String.join(",",
-            escapeCsvValue(sequence.getName()),
-            escapeCsvValue(sequence.getDisplayName()),
-            escapeCsvValue(sequence.getArtist()),
-            escapeCsvValue(sequence.getGroup()),
-            escapeCsvValue(sequence.getImageUrl()),
-            escapeCsvValue(sequence.getCategory())
-    )).append("\n"));
+        escapeCsvValue(sequence.getName()),
+        escapeCsvValue(sequence.getDisplayName()),
+        escapeCsvValue(sequence.getArtist()),
+        escapeCsvValue(sequence.getGroup()),
+        escapeCsvValue(sequence.getImageUrl()),
+        escapeCsvValue(sequence.getCategory()))).append("\n"));
 
     byte[] csvBytes = csvBuilder.toString().getBytes(StandardCharsets.UTF_8);
     ByteArrayResource resource = new ByteArrayResource(csvBytes);
@@ -408,13 +425,13 @@ public class ExcelUtil {
     httpHeaders.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=sequences.csv");
     httpHeaders.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(csvBytes.length));
     return ResponseEntity.ok()
-            .headers(httpHeaders)
-            .contentType(MediaType.parseMediaType("text/csv"))
-            .body(resource);
+        .headers(httpHeaders)
+        .contentType(MediaType.parseMediaType("text/csv"))
+        .body(resource);
   }
 
   private String escapeCsvValue(Object value) {
-    if(value == null) {
+    if (value == null) {
       return "\"\"";
     }
     String stringValue = String.valueOf(value).replace("\"", "\"\"");
