@@ -65,12 +65,12 @@ jobs:
           Application: remote-falcon-control-panel
           Version: ${{ github.sha }}
           Env: prod
-          Replicas: 2
+          Replicas: 1
           Image: ${{ env.REGISTRY }}/${{ steps.repository_string.outputs.lowercase }}:${{ github.sha }}
-          Requests.Memory: 2000Mi
-          Requests.CPU: 500m
-          Limits.Memory: 2500Mi
-          Limits.CPU: 750m
+          Requests.Memory: 768Mi
+          Requests.CPU: 50m
+          Limits.Memory: 1024Mi
+          Limits.CPU: 500m
           Host: remotefalcon.com
 
       - name: Install doctl
@@ -79,7 +79,7 @@ jobs:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Save DigitalOcean kubeconfig
-        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 9badee22-1583-464e-8117-a7090179f151
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ad868632-49dd-4c78-b8dc-52ad07c3b8f6
 
       - name: Kubectl apply
         run: kubectl apply -f ./k8s/manifest.yml

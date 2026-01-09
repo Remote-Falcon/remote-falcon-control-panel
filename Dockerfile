@@ -12,4 +12,4 @@ ENV OTEL_OPTS=${OTEL_OPTS}
 
 ADD 'https://dtdg.co/latest-java-tracer' /usr/app/dd-java-agent.jar
 
-ENTRYPOINT exec java $JAVA_OPTS $OTEL_OPTS -XX:FlightRecorderOptions=stackdepth=256 -XX:MaxRAMPercentage=75.0 -jar /usr/app/remote-falcon-control-panel.jar
+ENTRYPOINT exec java $JAVA_OPTS $OTEL_OPTS -XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=30 -XX:FlightRecorderOptions=stackdepth=256 -jar /usr/app/remote-falcon-control-panel.jar
