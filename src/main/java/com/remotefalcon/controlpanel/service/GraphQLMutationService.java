@@ -16,7 +16,6 @@ import com.remotefalcon.library.enums.ShowRole;
 import com.remotefalcon.library.enums.StatusResponse;
 import com.remotefalcon.library.enums.ViewerControlMode;
 import com.remotefalcon.library.models.*;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -40,7 +39,6 @@ public class GraphQLMutationService {
     private final ShowRepository showRepository;
     private final NotificationRepository notificationRepository;
     private final WattsonRepository wattsonRepository;
-    private final HttpServletRequest httpServletRequest;
     private final ClientUtil clientUtil;
 
     @Value("${auto-validate-email}")
@@ -48,8 +46,9 @@ public class GraphQLMutationService {
 
     public Boolean signUp(String firstName, String lastName, String showName) {
         String showSubdomain = showName.replaceAll("\\s", "").toLowerCase();
-        String[] basicAuthCredentials = this.authUtil.getBasicAuthCredentials(httpServletRequest);
-        String ipAddress = this.clientUtil.getClientIp(httpServletRequest);
+        var request = this.authUtil.getCurrentRequest();
+        String[] basicAuthCredentials = this.authUtil.getBasicAuthCredentials(request);
+        String ipAddress = this.clientUtil.getClientIp(request);
         if (basicAuthCredentials != null) {
             String email = basicAuthCredentials[0];
             String password = basicAuthCredentials[1];
@@ -187,7 +186,7 @@ public class GraphQLMutationService {
         if(show.isEmpty()) {
             throw new RuntimeException(StatusResponse.UNAUTHORIZED.name());
         }
-        String updatedPassword = this.authUtil.getPasswordFromHeader(httpServletRequest);
+        String updatedPassword = this.authUtil.getPasswordFromHeader(this.authUtil.getCurrentRequest());
         if (updatedPassword != null) {
             BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
             String hashedPassword = passwordEncoder.encode(updatedPassword);
@@ -203,8 +202,9 @@ public class GraphQLMutationService {
     public Boolean updatePassword() {
         Optional<Show> show = this.showRepository.findByShowToken(authUtil.getTokenDTO().getShowToken());
         if(show.isPresent()) {
-            String password = this.authUtil.getPasswordFromHeader(httpServletRequest);
-            String updatedPassword = this.authUtil.getUpdatedPasswordFromHeader(httpServletRequest);
+            var request = this.authUtil.getCurrentRequest();
+            String password = this.authUtil.getPasswordFromHeader(request);
+            String updatedPassword = this.authUtil.getUpdatedPasswordFromHeader(request);
             if (updatedPassword != null) {
                 BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
                 boolean passwordsMatch = passwordEncoder.matches(password, show.get().getPassword());

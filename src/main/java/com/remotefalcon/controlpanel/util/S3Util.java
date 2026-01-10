@@ -1,17 +1,26 @@
 package com.remotefalcon.controlpanel.util;
 
-import com.amazonaws.SdkClientException;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.*;
 import com.remotefalcon.controlpanel.model.S3Image;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.util.Strings;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.sync.ResponseTransformer;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.model.S3Object;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +30,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Slf4j
 public class S3Util {
-  private final AmazonS3 amazonS3Client;
+  private final S3Client amazonS3Client;
 
   private final String bucketName = "remote-falcon-images";
   private final String cdnEndpoint = String.format("https://%s.nyc3.cdn.digitaloceanspaces.com", bucketName);
@@ -30,21 +39,23 @@ public class S3Util {
     String path = String.format("%s/%s", showSubdomain,
         Objects.requireNonNull(file.getOriginalFilename()).toLowerCase());
 
-    List<S3ObjectSummary> objectSummaries = amazonS3Client.listObjectsV2(bucketName, showSubdomain)
-        .getObjectSummaries();
-    if (objectSummaries.size() >= 50) {
+    ListObjectsV2Response listResponse = amazonS3Client.listObjectsV2(ListObjectsV2Request.builder()
+        .bucket(bucketName)
+        .prefix(showSubdomain)
+        .build());
+    if (listResponse.contents().size() >= 50) {
       return ResponseEntity.badRequest().body("You have reached the maximum number of images");
     }
 
-    try {
-      InputStream fileInputStream = file.getInputStream();
-      ObjectMetadata metadata = new ObjectMetadata();
-      metadata.setContentLength(file.getSize());
-      metadata.setContentType(file.getContentType());
-      PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, path, fileInputStream, metadata)
-          .withCannedAcl(CannedAccessControlList.PublicRead);
-      amazonS3Client.putObject(putObjectRequest);
-    } catch (IOException e) {
+    try (InputStream fileInputStream = file.getInputStream()) {
+      PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+          .bucket(bucketName)
+          .key(path)
+          .contentType(file.getContentType())
+          .acl(ObjectCannedACL.PUBLIC_READ)
+          .build();
+      amazonS3Client.putObject(putObjectRequest, RequestBody.fromInputStream(fileInputStream, file.getSize()));
+    } catch (IOException | S3Exception e) {
       throw new RuntimeException(e);
     }
     return ResponseEntity.ok(file.getOriginalFilename());
@@ -52,20 +63,15 @@ public class S3Util {
 
   public Boolean downloadFile(String filename, String showSubdomain) {
     String path = String.format("%s/%s", showSubdomain, filename);
-    String downloadsPath = Paths.get(System.getProperty("user.home"), "Downloads", filename).toString();
+    Path downloadsPath = Paths.get(System.getProperty("user.home"), "Downloads", filename);
 
-    GetObjectRequest getObjectRequest = new GetObjectRequest(bucketName, path);
+    GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+        .bucket(bucketName)
+        .key(path)
+        .build();
     try {
-      S3Object s3Object = amazonS3Client.getObject(getObjectRequest);
-      InputStream inputStream = s3Object.getObjectContent();
-      FileOutputStream outputStream = new FileOutputStream(downloadsPath);
-      byte[] buffer = new byte[4096];
-      int bytesRead;
-      while ((bytesRead = inputStream.read(buffer)) != -1) {
-        outputStream.write(buffer, 0, bytesRead);
-      }
-      outputStream.close();
-    } catch (SdkClientException | IOException e) {
+      amazonS3Client.getObject(getObjectRequest, ResponseTransformer.toFile(downloadsPath));
+    } catch (S3Exception e) {
       return false;
     }
     return true;
@@ -73,18 +79,24 @@ public class S3Util {
 
   public void deleteFile(String filename, String showSubdomain) {
     String path = String.format("%s/%s", showSubdomain, filename);
-    amazonS3Client.deleteObject(bucketName, path);
+    amazonS3Client.deleteObject(DeleteObjectRequest.builder()
+        .bucket(bucketName)
+        .key(path)
+        .build());
   }
 
   public List<S3Image> getImages(String showSubdomain) {
     List<S3Image> s3Images = new ArrayList<>();
-    List<S3ObjectSummary> objectSummaries = amazonS3Client.listObjectsV2(bucketName, showSubdomain)
-        .getObjectSummaries();
-    for (S3ObjectSummary objectSummary : objectSummaries) {
-      String key = objectSummary.getKey();
+    ListObjectsV2Response listResponse = amazonS3Client.listObjectsV2(ListObjectsV2Request.builder()
+        .bucket(bucketName)
+        .prefix(showSubdomain)
+        .build());
+    for (S3Object objectSummary : listResponse.contents()) {
+      String key = objectSummary.key();
+      String name = key.contains("/") ? key.substring(key.lastIndexOf('/') + 1) : key;
       s3Images.add(S3Image.builder()
           .path(String.format("%s/%s", cdnEndpoint, key))
-          .name(Strings.split(key, '/')[1])
+          .name(name)
           .build());
     }
     return s3Images;

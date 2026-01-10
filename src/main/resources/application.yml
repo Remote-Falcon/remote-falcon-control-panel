@@ -1,6 +1,8 @@
 spring:
   application:
     name: remote-falcon-control-panel
+  main:
+    web-application-type: servlet
   jpa:
     hibernate:
       naming:

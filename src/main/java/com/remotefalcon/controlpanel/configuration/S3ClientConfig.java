@@ -1,13 +1,17 @@
 package com.remotefalcon.controlpanel.configuration;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.StringUtils;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Configuration;
+
+import java.net.URI;
 
 @Configuration
 public class S3ClientConfig {
@@ -19,12 +23,19 @@ public class S3ClientConfig {
     private String s3SecretKey;
 
     @Bean
-    public AmazonS3 amazonS3Client() {
-        BasicAWSCredentials basicAWSCredentials = new BasicAWSCredentials(s3AccessKey, s3SecretKey);
+    public S3Client amazonS3Client() {
+        if (!StringUtils.hasText(s3Endpoint)) {
+            throw new IllegalStateException("s3.endpoint must be set (including scheme, e.g. https://nyc3.digitaloceanspaces.com)");
+        }
+        String normalizedEndpoint = s3Endpoint.contains("://") ? s3Endpoint : "https://" + s3Endpoint;
+        AwsBasicCredentials credentials = AwsBasicCredentials.create(s3AccessKey, s3SecretKey);
 
-        return AmazonS3ClientBuilder.standard()
-                .withCredentials(new AWSStaticCredentialsProvider(basicAWSCredentials))
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Endpoint, "us-east-1"))
+        return S3Client.builder()
+                .credentialsProvider(StaticCredentialsProvider.create(credentials))
+                .endpointOverride(URI.create(normalizedEndpoint))
+                .region(Region.US_EAST_1)
+                .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
+                .httpClient(UrlConnectionHttpClient.builder().build())
                 .build();
     }
 }

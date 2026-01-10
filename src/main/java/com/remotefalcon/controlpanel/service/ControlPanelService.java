@@ -7,17 +7,17 @@ import com.remotefalcon.controlpanel.response.GitHubIssueResponse;
 import com.remotefalcon.controlpanel.util.AuthUtil;
 import com.remotefalcon.library.documents.Show;
 import com.remotefalcon.library.enums.StatusResponse;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,19 +26,19 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Slf4j
 public class ControlPanelService {
-  private final WebClient gitHubWebClient;
+  private final RestTemplate gitHubRestTemplate;
   private final AuthUtil authUtil;
   private final ShowRepository showRepository;
-  private final HttpServletRequest httpServletRequest;
 
   private final S3Util s3Util;
 
   public ResponseEntity<List<GitHubIssueResponse>> gitHubIssues() {
-    List<GitHubIssueResponse> ghIssue = this.gitHubWebClient.get()
-            .uri("repos/Remote-Falcon/remote-falcon-issue-tracker/issues")
-            .retrieve()
-            .bodyToMono(new ParameterizedTypeReference<List<GitHubIssueResponse>>() {})
-            .block();
+    ResponseEntity<List<GitHubIssueResponse>> responseEntity = this.gitHubRestTemplate.exchange(
+            "/repos/Remote-Falcon/remote-falcon-issue-tracker/issues",
+            HttpMethod.GET,
+            null,
+            new ParameterizedTypeReference<List<GitHubIssueResponse>>() {});
+    List<GitHubIssueResponse> ghIssue = responseEntity.getBody();
     if(CollectionUtils.isNotEmpty(ghIssue)) {
       ghIssue.forEach(issue -> {
         boolean isBug = issue.getLabels().stream().anyMatch(label -> StringUtils.equalsIgnoreCase("bug", label.getName()));
@@ -49,7 +49,7 @@ public class ControlPanelService {
   }
 
   public ResponseEntity<String> getJwt() {
-    String[] basicAuthCredentials = this.authUtil.getBasicAuthCredentials(httpServletRequest);
+    String[] basicAuthCredentials = this.authUtil.getBasicAuthCredentials(this.authUtil.getCurrentRequest());
     if (basicAuthCredentials != null) {
       String email = basicAuthCredentials[0];
       String password = basicAuthCredentials[1];
