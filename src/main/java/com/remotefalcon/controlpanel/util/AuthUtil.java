@@ -51,8 +51,12 @@ public class AuthUtil {
     }
   }
 
+  public HttpServletRequest getCurrentRequest() {
+    return ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+  }
+
   public TokenDTO getJwtPayload() {
-    HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+    HttpServletRequest request = getCurrentRequest();
     String token = this.getTokenFromRequest(request);
     try {
       DecodedJWT decodedJWT = JWT.decode(token);

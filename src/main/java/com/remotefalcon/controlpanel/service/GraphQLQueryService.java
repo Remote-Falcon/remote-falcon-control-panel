@@ -39,7 +39,6 @@ import com.remotefalcon.library.documents.Wattson;
 import com.remotefalcon.library.enums.StatusResponse;
 import com.remotefalcon.library.enums.ViewerControlMode;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -54,7 +53,6 @@ public class GraphQLQueryService {
     private final ShowRepository showRepository;
     private final NotificationRepository notificationRepository;
     private final WattsonRepository wattsonRepository;
-    private final HttpServletRequest httpServletRequest;
 
     @Value("${wattson.key}")
     String wattsonKey;
@@ -66,9 +64,10 @@ public class GraphQLQueryService {
     Long wattsonMaxOutputTokens;
 
     public Show signIn() {
-        String[] basicAuthCredentials = this.authUtil.getBasicAuthCredentials(httpServletRequest);
+        var request = this.authUtil.getCurrentRequest();
+        String[] basicAuthCredentials = this.authUtil.getBasicAuthCredentials(request);
         if (basicAuthCredentials != null) {
-            String ipAddress = this.clientUtil.getClientIp(httpServletRequest);
+            String ipAddress = this.clientUtil.getClientIp(request);
             String email = basicAuthCredentials[0];
             String password = basicAuthCredentials[1];
             Optional<Show> optionalShow = this.showRepository.findByEmailIgnoreCase(email);

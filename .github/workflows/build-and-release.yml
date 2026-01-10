@@ -40,8 +40,6 @@ jobs:
           context: .
           push: true
           tags: ${{ env.REGISTRY }}/${{ steps.repository_string.outputs.lowercase }}:${{ github.sha }}
-          build-args: |
-            OTEL_OPTS=
   release-production:
     name: Release Production
     environment: prod
@@ -67,9 +65,9 @@ jobs:
           Env: prod
           Replicas: 1
           Image: ${{ env.REGISTRY }}/${{ steps.repository_string.outputs.lowercase }}:${{ github.sha }}
-          Requests.Memory: 768Mi
-          Requests.CPU: 50m
-          Limits.Memory: 1024Mi
+          Requests.Memory: 256Mi
+          Requests.CPU: 100m
+          Limits.Memory: 512Mi
           Limits.CPU: 500m
           Host: remotefalcon.com
 
