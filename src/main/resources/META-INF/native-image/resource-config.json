@@ -1,0 +1,18 @@
+{
+  "resources": {
+    "includes": [
+      {
+        "pattern": "META-INF/services/org.apache.logging.log4j.spi.Provider"
+      },
+      {
+        "pattern": "org/apache/xmlbeans/impl/regex/message.*"
+      },
+      {
+        "pattern": "org/apache/poi/schemas/ooxml/system/ooxml/.*"
+      },
+      {
+        "pattern": "org/apache/poi/schemas/ooxml/.*"
+      }
+    ]
+  }
+}

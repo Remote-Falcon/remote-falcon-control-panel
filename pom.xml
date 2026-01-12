@@ -131,6 +131,17 @@
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
             <version>5.2.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.poi</groupId>
+                    <artifactId>poi-ooxml-lite</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml-full</artifactId>
+            <version>5.2.1</version>
         </dependency>
         <dependency>
             <groupId>io.github.hkarthik7</groupId>
@@ -254,6 +265,12 @@
                         <artifactId>native-maven-plugin</artifactId>
                         <version>0.10.2</version>
                         <extensions>true</extensions>
+                        <configuration>
+                            <buildArgs>
+                                <buildArg>-H:+AddAllCharsets</buildArg>
+                                <buildArg>--initialize-at-run-time=org.apache.poi.schemas.ooxml,org.openxmlformats.schemas,org.apache.xmlbeans.impl.schema</buildArg>
+                            </buildArgs>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>build-native</id>

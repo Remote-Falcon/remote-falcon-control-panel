@@ -52,3 +52,5 @@ yarn-error.log*
 /target
 .qodana
 /.fleet
+
+docker-compose.yaml

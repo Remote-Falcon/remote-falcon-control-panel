@@ -3,30 +3,21 @@ package com.remotefalcon.controlpanel.util;
 import com.remotefalcon.controlpanel.response.dashboard.DashboardStatsResponse;
 import com.remotefalcon.library.models.Sequence;
 
-import lombok.extern.slf4j.Slf4j;
-
-import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFFont;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+ 
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
-@Slf4j
 public class ExcelUtil {
   public static final List<String> SEQUENCE_CSV_HEADERS = List.of(
       "name",
@@ -39,350 +30,149 @@ public class ExcelUtil {
   public ResponseEntity<ByteArrayResource> generateDashboardExcel(DashboardStatsResponse dashboardStats,
       String timezone) {
     ResponseEntity<ByteArrayResource> response = ResponseEntity.status(204).build();
-    Workbook workbook = new XSSFWorkbook();
+    StringBuilder csvBuilder = new StringBuilder();
 
-    this.uniquePageVisitsByDate(workbook, dashboardStats, timezone);
-    this.totalPageVisitsByDate(workbook, dashboardStats, timezone);
-    this.sequenceRequestsByDate(workbook, dashboardStats, timezone);
-    this.sequenceRequestsBySequence(workbook, dashboardStats);
-    this.sequenceVotesByDate(workbook, dashboardStats, timezone);
-    this.sequenceVotesBySequence(workbook, dashboardStats);
-    this.sequenceWinsByDate(workbook, dashboardStats, timezone);
-    this.sequenceWinsBySequence(workbook, dashboardStats);
+    this.appendUniquePageVisitsByDate(csvBuilder, dashboardStats, timezone);
+    this.appendTotalPageVisitsByDate(csvBuilder, dashboardStats, timezone);
+    this.appendSequenceRequestsByDate(csvBuilder, dashboardStats, timezone);
+    this.appendSequenceRequestsBySequence(csvBuilder, dashboardStats);
+    this.appendSequenceVotesByDate(csvBuilder, dashboardStats, timezone);
+    this.appendSequenceVotesBySequence(csvBuilder, dashboardStats);
+    this.appendSequenceWinsByDate(csvBuilder, dashboardStats, timezone);
+    this.appendSequenceWinsBySequence(csvBuilder, dashboardStats);
 
-    try {
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      workbook.write(out);
-      ByteArrayResource resource = new ByteArrayResource(out.toByteArray());
-      HttpHeaders httpHeaders = new HttpHeaders();
-      httpHeaders.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=stats.xlsx");
-      httpHeaders.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(out.toByteArray().length));
-      response = ResponseEntity.ok().headers(httpHeaders)
-          .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
-          .body(resource);
-      out.close();
-      workbook.close();
-    } catch (IOException e) {
-      log.error("Error creating XLSX file", e);
-    }
+    byte[] csvBytes = csvBuilder.toString().getBytes(StandardCharsets.UTF_8);
+    ByteArrayResource resource = new ByteArrayResource(csvBytes);
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=stats.csv");
+    httpHeaders.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(csvBytes.length));
+    response = ResponseEntity.ok().headers(httpHeaders)
+        .contentType(MediaType.parseMediaType("text/csv"))
+        .body(resource);
     return response;
   }
 
-  private void uniquePageVisitsByDate(Workbook workbook, DashboardStatsResponse dashboardStats, String timezone) {
-    Sheet sheet = workbook.createSheet("Unique Page Visits by Date");
-    sheet.setColumnWidth(0, 6000);
-    sheet.setColumnWidth(1, 4000);
-
-    Row header = sheet.createRow(0);
-
-    Cell headerCell = header.createCell(0);
-    headerCell.setCellValue("Date");
-    headerCell.setCellStyle(getHeaderStyle(workbook));
-
-    headerCell = header.createCell(1);
-    headerCell.setCellValue("Unique Visits");
-    headerCell.setCellStyle(getHeaderStyle(workbook));
-
-    headerCell = header.createCell(2);
-    headerCell.setCellValue("Viewer IPs");
-    headerCell.setCellStyle(getHeaderStyle(workbook));
-
-    AtomicInteger rowIndex = new AtomicInteger(1);
+  private void appendUniquePageVisitsByDate(StringBuilder csvBuilder, DashboardStatsResponse dashboardStats,
+      String timezone) {
+    appendSectionHeader(csvBuilder, "Unique Page Visits by Date");
+    appendRow(csvBuilder, List.of("Date", "Unique Visits", "Viewer IPs"));
     dashboardStats.getPage().forEach(visit -> {
-      Row row = sheet.createRow(rowIndex.get());
-
-      Cell cell = row.createCell(0);
-      cell.setCellValue(formatDateColumn(visit.getDate(), timezone));
-
-      cell = row.createCell(1);
-      cell.setCellValue(visit.getUnique());
-
-      cell = row.createCell(2);
-      StringBuilder viewerIpsBuilder = new StringBuilder();
-      int viewerIpsIndex = 1;
-      for (String viewer : visit.getViewerIps()) {
-        viewerIpsBuilder.append(viewer);
-        if (visit.getViewerIps().size() > viewerIpsIndex) {
-          viewerIpsBuilder.append("\r\n");
-        }
-        viewerIpsIndex++;
-      }
-      cell.setCellValue(viewerIpsBuilder.toString());
-      cell.setCellStyle(getCellWrapStyle(workbook));
-
-      rowIndex.getAndIncrement();
+      String viewerIps = String.join(" | ", visit.getViewerIps());
+      appendRow(csvBuilder, List.of(
+          formatDateColumn(visit.getDate(), timezone),
+          visit.getUnique(),
+          viewerIps));
     });
   }
 
-  private void totalPageVisitsByDate(Workbook workbook, DashboardStatsResponse dashboardStats, String timezone) {
-    Sheet sheet = workbook.createSheet("Total Page Visits by Date");
-    sheet.setColumnWidth(0, 6000);
-    sheet.setColumnWidth(1, 4000);
-
-    Row header = sheet.createRow(0);
-
-    Cell headerCell = header.createCell(0);
-    headerCell.setCellValue("Date");
-    headerCell.setCellStyle(getHeaderStyle(workbook));
-
-    headerCell = header.createCell(1);
-    headerCell.setCellValue("Total Visits");
-    headerCell.setCellStyle(getHeaderStyle(workbook));
-
-    AtomicInteger rowIndex = new AtomicInteger(1);
-    dashboardStats.getPage().forEach(visit -> {
-      Row row = sheet.createRow(rowIndex.get());
-
-      Cell cell = row.createCell(0);
-      cell.setCellValue(formatDateColumn(visit.getDate(), timezone));
-
-      cell = row.createCell(1);
-      cell.setCellValue(visit.getTotal());
-
-      rowIndex.getAndIncrement();
-    });
+  private void appendTotalPageVisitsByDate(StringBuilder csvBuilder, DashboardStatsResponse dashboardStats,
+      String timezone) {
+    appendSectionHeader(csvBuilder, "Total Page Visits by Date");
+    appendRow(csvBuilder, List.of("Date", "Total Visits"));
+    dashboardStats.getPage().forEach(visit -> appendRow(csvBuilder, List.of(
+        formatDateColumn(visit.getDate(), timezone),
+        visit.getTotal())));
   }
 
-  private void sequenceRequestsByDate(Workbook workbook, DashboardStatsResponse dashboardStats, String timezone) {
-    Sheet sheet = workbook.createSheet("Sequence Requests by Date");
-    sheet.setColumnWidth(0, 6000);
-    sheet.setColumnWidth(1, 12000);
-    sheet.setColumnWidth(2, 4000);
-
-    Row header = sheet.createRow(0);
-
-    Cell headerCell = header.createCell(0);
-    headerCell.setCellValue("Date");
-    headerCell.setCellStyle(getHeaderStyle(workbook));
-
-    headerCell = header.createCell(1);
-    headerCell.setCellValue("Sequence Requests");
-    headerCell.setCellStyle(getHeaderStyle(workbook));
-
-    headerCell = header.createCell(2);
-    headerCell.setCellValue("Total Requests");
-    headerCell.setCellStyle(getHeaderStyle(workbook));
-
-    AtomicInteger rowIndex = new AtomicInteger(1);
+  private void appendSequenceRequestsByDate(StringBuilder csvBuilder, DashboardStatsResponse dashboardStats,
+      String timezone) {
+    appendSectionHeader(csvBuilder, "Sequence Requests by Date");
+    appendRow(csvBuilder, List.of("Date", "Sequence Requests", "Total Requests"));
     dashboardStats.getJukeboxByDate().forEach(request -> {
-      Row row = sheet.createRow(rowIndex.get());
-
-      Cell cell = row.createCell(0);
-      cell.setCellValue(formatDateColumn(request.getDate(), timezone));
-
-      cell = row.createCell(1);
       StringBuilder sequenceRequests = new StringBuilder();
       int sequenceRequestIndex = 1;
       for (DashboardStatsResponse.SequenceStat sequenceRequest : request.getSequences()) {
         sequenceRequests.append(String.format("%s: %s", sequenceRequest.getName(), sequenceRequest.getTotal()));
         if (request.getSequences().size() > sequenceRequestIndex) {
-          sequenceRequests.append("\r\n");
+          sequenceRequests.append(" | ");
         }
         sequenceRequestIndex++;
       }
-      cell.setCellValue(sequenceRequests.toString());
-      cell.setCellStyle(getCellWrapStyle(workbook));
-
-      cell = row.createCell(2);
-      cell.setCellValue(request.getTotal());
-
-      rowIndex.getAndIncrement();
+      appendRow(csvBuilder, List.of(
+          formatDateColumn(request.getDate(), timezone),
+          sequenceRequests.toString(),
+          request.getTotal()));
     });
   }
 
-  private void sequenceRequestsBySequence(Workbook workbook, DashboardStatsResponse dashboardStats) {
-    Sheet sheet = workbook.createSheet("Sequence Requests by Sequence");
-    sheet.setColumnWidth(0, 6000);
-    sheet.setColumnWidth(1, 4000);
-
-    Row header = sheet.createRow(0);
-
-    Cell headerCell = header.createCell(0);
-    headerCell.setCellValue("Sequence Name");
-    headerCell.setCellStyle(getHeaderStyle(workbook));
-
-    headerCell = header.createCell(1);
-    headerCell.setCellValue("Total Requests");
-    headerCell.setCellStyle(getHeaderStyle(workbook));
-
-    AtomicInteger rowIndex = new AtomicInteger(1);
-    dashboardStats.getJukeboxBySequence().getSequences().forEach(sequence -> {
-      Row row = sheet.createRow(rowIndex.get());
-
-      Cell cell = row.createCell(0);
-      cell.setCellValue(sequence.getName());
-
-      cell = row.createCell(1);
-      cell.setCellValue(sequence.getTotal());
-
-      rowIndex.getAndIncrement();
-    });
+  private void appendSequenceRequestsBySequence(StringBuilder csvBuilder, DashboardStatsResponse dashboardStats) {
+    appendSectionHeader(csvBuilder, "Sequence Requests by Sequence");
+    appendRow(csvBuilder, List.of("Sequence Name", "Total Requests"));
+    dashboardStats.getJukeboxBySequence().getSequences().forEach(sequence -> appendRow(csvBuilder, List.of(
+        sequence.getName(),
+        sequence.getTotal())));
   }
 
-  private void sequenceVotesByDate(Workbook workbook, DashboardStatsResponse dashboardStats, String timezone) {
-    Sheet sheet = workbook.createSheet("Sequence Votes by Date");
-    sheet.setColumnWidth(0, 6000);
-    sheet.setColumnWidth(1, 12000);
-    sheet.setColumnWidth(2, 4000);
-
-    Row header = sheet.createRow(0);
-
-    Cell headerCell = header.createCell(0);
-    headerCell.setCellValue("Date");
-    headerCell.setCellStyle(getHeaderStyle(workbook));
-
-    headerCell = header.createCell(1);
-    headerCell.setCellValue("Sequence Votes");
-    headerCell.setCellStyle(getHeaderStyle(workbook));
-
-    headerCell = header.createCell(2);
-    headerCell.setCellValue("Total Votes");
-    headerCell.setCellStyle(getHeaderStyle(workbook));
-
-    AtomicInteger rowIndex = new AtomicInteger(1);
+  private void appendSequenceVotesByDate(StringBuilder csvBuilder, DashboardStatsResponse dashboardStats,
+      String timezone) {
+    appendSectionHeader(csvBuilder, "Sequence Votes by Date");
+    appendRow(csvBuilder, List.of("Date", "Sequence Votes", "Total Votes"));
     dashboardStats.getVotingByDate().forEach(vote -> {
-      Row row = sheet.createRow(rowIndex.get());
-
-      Cell cell = row.createCell(0);
-      cell.setCellValue(formatDateColumn(vote.getDate(), timezone));
-
-      cell = row.createCell(1);
-      StringBuilder sequenceRequests = new StringBuilder();
+      StringBuilder sequenceVotes = new StringBuilder();
       int sequenceVoteIndex = 1;
       for (DashboardStatsResponse.SequenceStat sequenceVote : vote.getSequences()) {
-        sequenceRequests.append(String.format("%s: %s", sequenceVote.getName(), sequenceVote.getTotal()));
+        sequenceVotes.append(String.format("%s: %s", sequenceVote.getName(), sequenceVote.getTotal()));
         if (vote.getSequences().size() > sequenceVoteIndex) {
-          sequenceRequests.append("\r\n");
+          sequenceVotes.append(" | ");
         }
         sequenceVoteIndex++;
       }
-      cell.setCellValue(sequenceRequests.toString());
-      cell.setCellStyle(getCellWrapStyle(workbook));
-
-      cell = row.createCell(2);
-      cell.setCellValue(vote.getTotal());
-
-      rowIndex.getAndIncrement();
+      appendRow(csvBuilder, List.of(
+          formatDateColumn(vote.getDate(), timezone),
+          sequenceVotes.toString(),
+          vote.getTotal()));
     });
   }
 
-  private void sequenceVotesBySequence(Workbook workbook, DashboardStatsResponse dashboardStats) {
-    Sheet sheet = workbook.createSheet("Sequence Votes by Sequence");
-    sheet.setColumnWidth(0, 6000);
-    sheet.setColumnWidth(1, 4000);
-
-    Row header = sheet.createRow(0);
-
-    Cell headerCell = header.createCell(0);
-    headerCell.setCellValue("Sequence Name");
-    headerCell.setCellStyle(getHeaderStyle(workbook));
-
-    headerCell = header.createCell(1);
-    headerCell.setCellValue("Total Votes");
-    headerCell.setCellStyle(getHeaderStyle(workbook));
-
-    AtomicInteger rowIndex = new AtomicInteger(1);
-    dashboardStats.getVotingBySequence().getSequences().forEach(sequence -> {
-      Row row = sheet.createRow(rowIndex.get());
-
-      Cell cell = row.createCell(0);
-      cell.setCellValue(sequence.getName());
-
-      cell = row.createCell(1);
-      cell.setCellValue(sequence.getTotal());
-
-      rowIndex.getAndIncrement();
-    });
+  private void appendSequenceVotesBySequence(StringBuilder csvBuilder, DashboardStatsResponse dashboardStats) {
+    appendSectionHeader(csvBuilder, "Sequence Votes by Sequence");
+    appendRow(csvBuilder, List.of("Sequence Name", "Total Votes"));
+    dashboardStats.getVotingBySequence().getSequences().forEach(sequence -> appendRow(csvBuilder, List.of(
+        sequence.getName(),
+        sequence.getTotal())));
   }
 
-  private void sequenceWinsByDate(Workbook workbook, DashboardStatsResponse dashboardStats, String timezone) {
-    Sheet sheet = workbook.createSheet("Sequence Wins by Date");
-    sheet.setColumnWidth(0, 6000);
-    sheet.setColumnWidth(1, 12000);
-    sheet.setColumnWidth(2, 4000);
-
-    Row header = sheet.createRow(0);
-
-    Cell headerCell = header.createCell(0);
-    headerCell.setCellValue("Date");
-    headerCell.setCellStyle(getHeaderStyle(workbook));
-
-    headerCell = header.createCell(1);
-    headerCell.setCellValue("Sequence Wins");
-    headerCell.setCellStyle(getHeaderStyle(workbook));
-
-    headerCell = header.createCell(2);
-    headerCell.setCellValue("Total Wins");
-    headerCell.setCellStyle(getHeaderStyle(workbook));
-
-    AtomicInteger rowIndex = new AtomicInteger(1);
+  private void appendSequenceWinsByDate(StringBuilder csvBuilder, DashboardStatsResponse dashboardStats,
+      String timezone) {
+    appendSectionHeader(csvBuilder, "Sequence Wins by Date");
+    appendRow(csvBuilder, List.of("Date", "Sequence Wins", "Total Wins"));
     dashboardStats.getVotingWinByDate().forEach(win -> {
-      Row row = sheet.createRow(rowIndex.get());
-
-      Cell cell = row.createCell(0);
-      cell.setCellValue(formatDateColumn(win.getDate(), timezone));
-
-      cell = row.createCell(1);
-      StringBuilder sequenceRequests = new StringBuilder();
-      int sequenceVoteIndex = 1;
+      StringBuilder sequenceWins = new StringBuilder();
+      int sequenceWinIndex = 1;
       for (DashboardStatsResponse.SequenceStat sequenceWin : win.getSequences()) {
-        sequenceRequests.append(String.format("%s: %s", sequenceWin.getName(), sequenceWin.getTotal()));
-        if (win.getSequences().size() > sequenceVoteIndex) {
-          sequenceRequests.append("\r\n");
+        sequenceWins.append(String.format("%s: %s", sequenceWin.getName(), sequenceWin.getTotal()));
+        if (win.getSequences().size() > sequenceWinIndex) {
+          sequenceWins.append(" | ");
         }
-        sequenceVoteIndex++;
+        sequenceWinIndex++;
       }
-      cell.setCellValue(sequenceRequests.toString());
-      cell.setCellStyle(getCellWrapStyle(workbook));
-
-      cell = row.createCell(2);
-      cell.setCellValue(win.getTotal());
-
-      rowIndex.getAndIncrement();
+      appendRow(csvBuilder, List.of(
+          formatDateColumn(win.getDate(), timezone),
+          sequenceWins.toString(),
+          win.getTotal()));
     });
   }
 
-  private void sequenceWinsBySequence(Workbook workbook, DashboardStatsResponse dashboardStats) {
-    Sheet sheet = workbook.createSheet("Sequence Wins by Sequence");
-    sheet.setColumnWidth(0, 6000);
-    sheet.setColumnWidth(1, 4000);
-
-    Row header = sheet.createRow(0);
-
-    Cell headerCell = header.createCell(0);
-    headerCell.setCellValue("Sequence Name");
-    headerCell.setCellStyle(getHeaderStyle(workbook));
-
-    headerCell = header.createCell(1);
-    headerCell.setCellValue("Total Wins");
-    headerCell.setCellStyle(getHeaderStyle(workbook));
-
-    AtomicInteger rowIndex = new AtomicInteger(1);
-    dashboardStats.getVotingWinBySequence().getSequences().forEach(sequence -> {
-      Row row = sheet.createRow(rowIndex.get());
-
-      Cell cell = row.createCell(0);
-      cell.setCellValue(sequence.getName());
-
-      cell = row.createCell(1);
-      cell.setCellValue(sequence.getTotal());
-
-      rowIndex.getAndIncrement();
-    });
+  private void appendSequenceWinsBySequence(StringBuilder csvBuilder, DashboardStatsResponse dashboardStats) {
+    appendSectionHeader(csvBuilder, "Sequence Wins by Sequence");
+    appendRow(csvBuilder, List.of("Sequence Name", "Total Wins"));
+    dashboardStats.getVotingWinBySequence().getSequences().forEach(sequence -> appendRow(csvBuilder, List.of(
+        sequence.getName(),
+        sequence.getTotal())));
   }
 
-  private CellStyle getHeaderStyle(Workbook workbook) {
-    CellStyle cellStyle = workbook.createCellStyle();
-    XSSFFont font = ((XSSFWorkbook) workbook).createFont();
-    font.setBold(true);
-    cellStyle.setFont(font);
-    return cellStyle;
+  private void appendSectionHeader(StringBuilder csvBuilder, String header) {
+    if (csvBuilder.length() > 0) {
+      csvBuilder.append("\n");
+    }
+    csvBuilder.append(header).append("\n");
   }
 
-  private CellStyle getCellWrapStyle(Workbook workbook) {
-    CellStyle cellStyle = workbook.createCellStyle();
-    cellStyle.setWrapText(true);
-    return cellStyle;
+  private void appendRow(StringBuilder csvBuilder, List<Object> values) {
+    List<String> escapedValues = values.stream()
+        .map(this::escapeCsvValue)
+        .toList();
+    csvBuilder.append(String.join(",", escapedValues)).append("\n");
   }
 
   private String formatDateColumn(Long date, String timezone) {

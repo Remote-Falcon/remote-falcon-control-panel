@@ -1,0 +1,54 @@
+[
+  {
+    "name": "org.apache.logging.log4j.message.DefaultFlowMessageFactory",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.apache.logging.log4j.message.ParameterizedMessageFactory",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.apache.logging.slf4j.SLF4JProvider",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "java.util.ServiceLoader",
+    "methods": [
+      {
+        "name": "load",
+        "parameterTypes": [
+          "java.lang.Class",
+          "java.lang.ClassLoader"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "org.apache.poi.schemas.ooxml.system.ooxml.TypeSystemHolder",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "[Ljava.util.Calendar;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.sql.Date;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.sql.Time;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.sql.Timestamp;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.util.Date;",
+    "unsafeAllocated": true
+  },
+  {
+    "name": "[Ljava.util.GregorianCalendar;",
+    "unsafeAllocated": true
+  }
+]
