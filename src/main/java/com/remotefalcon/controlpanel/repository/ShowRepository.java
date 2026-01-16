@@ -21,7 +21,9 @@ public interface ShowRepository extends MongoRepository<Show, String> {
     Optional<Show> findByEmailIgnoreCase(String email);
     Optional<Show> findByPasswordResetLinkAndPasswordResetExpiryGreaterThan(String passwordResetLink, LocalDateTime passwordResetExpiry);
     List<Show> findByPreferencesNotificationPreferencesEnableFppHeartbeatIsTrueAndLastFppHeartbeatBefore(LocalDateTime lastFppHeartbeat);
-    List<Show> findTop10ByShowNameContainingIgnoreCase(String showName);
+    @Query(value = "{ 'showName': { '$regex': ?0, '$options': 'i' } }",
+            fields = "{ 'showName': 1 }")
+    List<ShowNameOnly> findTop25ByShowNameContainingIgnoreCase(String showName);
 
     @Query(value = "{ 'preferences.showOnMap' : true }",
             fields = "{ 'showName': 1, 'preferences.showLatitude': 1, 'preferences.showLongitude': 1, 'preferences.showOnMap': 1 }")

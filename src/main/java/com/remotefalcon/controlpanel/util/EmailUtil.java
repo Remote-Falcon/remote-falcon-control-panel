@@ -14,9 +14,6 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class EmailUtil {
 
-  @Value("${sendgrid.mail-from}")
-  String mailFrom;
-
   @Value("${sendgrid.key}")
   String sendgridKey;
 
@@ -55,7 +52,7 @@ public class EmailUtil {
 
   private MailerSendResponse sendEmail(Email email) {
     MailerSendResponse response = new MailerSendResponse();
-    email.setFrom("Remote Falcon", mailFrom);
+    email.setFrom("Remote Falcon", "noreply@remotefalcon.com");
 
     MailerSend ms = new MailerSend();
 

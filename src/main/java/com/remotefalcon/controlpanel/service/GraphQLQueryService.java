@@ -2,7 +2,6 @@ package com.remotefalcon.controlpanel.service;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -107,10 +106,10 @@ public class GraphQLQueryService {
         if (StringUtils.isBlank(showName)) {
             return Collections.emptyList();
         }
-        return this.showRepository.findTop10ByShowNameContainingIgnoreCase(showName)
+        return this.showRepository.findTop25ByShowNameContainingIgnoreCase(showName)
                 .stream()
-                .map(Show::getShowName)
-                .collect(Collectors.toList());
+                .map(show -> show.getShowName())
+                .toList();
     }
 
     private void checkFields(Show show) {
