@@ -64,8 +64,15 @@ public class EmailUtil {
     try {
       response = ms.emails().send(email);
     } catch (MailerSendException e) {
-      log.error("Error sending email", e);
-      response.responseStatusCode = 500;
+      log.error(
+          "Error sending email (code={}, message={}, responseBody={}, errors={})",
+          e.code,
+          e.message,
+          e.responseBody,
+          e.errors,
+          e
+      );
+      response.responseStatusCode = e.code > 0 ? e.code : 500;
     }
     return response;
   }
