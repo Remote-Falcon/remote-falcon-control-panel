@@ -7,4 +7,4 @@ server:
 client:
   header: "CF-Connecting-IP"
 
-auto-validate-email: true
+auto-validate-email: false
