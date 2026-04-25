@@ -3,6 +3,9 @@ spring:
     name: remote-falcon-control-panel
   main:
     web-application-type: servlet
+  data:
+    mongodb:
+      database: ${MONGO_DATABASE:remote-falcon}
   jpa:
     hibernate:
       naming:
