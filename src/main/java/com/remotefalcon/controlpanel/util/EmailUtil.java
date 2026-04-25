@@ -20,11 +20,20 @@ public class EmailUtil {
   @Value("${web.url}")
   String webUrl;
 
+  @Value("${mailersend.template-ids.sign-up}")
+  String signUpTemplateId;
+
+  @Value("${mailersend.template-ids.forgot-password}")
+  String forgotPasswordTemplateId;
+
+  @Value("${mailersend.template-ids.request-api-access}")
+  String requestApiAccessTemplateId;
+
   public MailerSendResponse sendSignUpEmail(Show show) {
     Email email = new Email();
     email.addRecipient(show.getShowName(), show.getEmail());
 
-    email.setTemplateId("3z0vklojo3eg7qrx");
+    email.setTemplateId(signUpTemplateId);
     email.setSubject("Welcome to Remote Falcon!");
     email.AddVariable("showName", show.getShowName());
     email.AddVariable("verifyEmailLink", String.format("%s/verifyEmail/%s/%s", webUrl, show.getShowToken(), show.getShowSubdomain()));
@@ -34,7 +43,7 @@ public class EmailUtil {
   public MailerSendResponse sendForgotPasswordEmail(Show show, String passwordResetLink) {
     Email email = new Email();
     email.addRecipient(show.getShowName(), show.getEmail());
-    email.setTemplateId("3vz9dlejwxp4kj50");
+    email.setTemplateId(forgotPasswordTemplateId);
     email.setSubject("You forgot your password, huh?");
     email.AddVariable("resetPasswordLink", String.format("%s/resetPassword/%s", webUrl, passwordResetLink));
     return sendEmail(email);
@@ -43,7 +52,7 @@ public class EmailUtil {
   public MailerSendResponse sendRequestApiAccessEmail(Show show, String apiAccessToken, String apiAccessSecret) {
     Email email = new Email();
     email.addRecipient(show.getShowName(), show.getEmail());
-    email.setTemplateId("3yxj6lj6e304do2r");
+    email.setTemplateId(requestApiAccessTemplateId);
     email.setSubject("Let's Get Coding!");
     email.AddVariable("accessToken", apiAccessToken);
     email.AddVariable("secretKey", apiAccessSecret);

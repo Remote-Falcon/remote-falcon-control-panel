@@ -33,6 +33,12 @@ management:
 sendgrid:
   mail-from: "noreply@remotefalcon.com"
 
+mailersend:
+  template-ids:
+    sign-up: ${MAILERSEND_TEMPLATE_SIGN_UP:v69oxl59ndrg785k}
+    forgot-password: ${MAILERSEND_TEMPLATE_FORGOT_PASSWORD:ynrw7gy02w2l2k8e}
+    request-api-access: ${MAILERSEND_TEMPLATE_REQUEST_API_ACCESS:yzkq340rd104d796}
+
 images:
   s3:
     bucket: ${IMAGES_S3_BUCKET:remote-falcon-images}

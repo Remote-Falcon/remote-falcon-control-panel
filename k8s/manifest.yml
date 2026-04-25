@@ -58,6 +58,12 @@ spec:
             secretKeyRef:
               name: remote-falcon-control-panel
               key: sendgrid-key
+        - name: MAILERSEND_TEMPLATE_SIGN_UP
+          value: "v69oxl59ndrg785k"
+        - name: MAILERSEND_TEMPLATE_FORGOT_PASSWORD
+          value: "ynrw7gy02w2l2k8e"
+        - name: MAILERSEND_TEMPLATE_REQUEST_API_ACCESS
+          value: "yzkq340rd104d796"
         - name: JWT_USER
           valueFrom:
             secretKeyRef:
