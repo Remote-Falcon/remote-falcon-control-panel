@@ -3,6 +3,7 @@ package com.remotefalcon.controlpanel.util;
 import com.remotefalcon.controlpanel.model.S3Image;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,8 +33,11 @@ import java.util.Objects;
 public class S3Util {
   private final S3Client amazonS3Client;
 
-  private final String bucketName = "remote-falcon-images";
-  private final String cdnEndpoint = String.format("https://%s.nyc3.cdn.digitaloceanspaces.com", bucketName);
+  @Value("${images.s3.bucket}")
+  private String bucketName;
+
+  @Value("${images.cdn.endpoint}")
+  private String cdnEndpoint;
 
   public ResponseEntity<String> uploadFile(MultipartFile file, String showSubdomain) {
     String path = String.format("%s/%s", showSubdomain,

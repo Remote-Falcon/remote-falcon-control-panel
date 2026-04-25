@@ -30,6 +30,12 @@ management:
 sendgrid:
   mail-from: "noreply@remotefalcon.com"
 
+images:
+  s3:
+    bucket: ${IMAGES_S3_BUCKET:remote-falcon-images}
+  cdn:
+    endpoint: ${IMAGES_CDN_ENDPOINT:https://remote-falcon-images.nyc3.cdn.digitaloceanspaces.com}
+
 logging:
   level:
     org:

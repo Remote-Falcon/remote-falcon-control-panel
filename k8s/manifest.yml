@@ -83,6 +83,10 @@ spec:
             secretKeyRef:
               name: remote-falcon-control-panel
               key: s3-secretKey
+        - name: IMAGES_S3_BUCKET
+          value: remote-falcon-uploads
+        - name: IMAGES_CDN_ENDPOINT
+          value: https://remote-falcon-uploads.nyc3.digitaloceanspaces.com
         - name: WATTSON_KEY
           valueFrom:
             secretKeyRef:
