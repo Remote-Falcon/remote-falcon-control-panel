@@ -156,7 +156,7 @@ public class GraphQLMutationService {
     }
 
     public Boolean forgotPassword(String email) {
-        Optional<Show> show = this.showRepository.findByEmailIgnoreCase(email);
+        Optional<Show> show = this.showRepository.findByEmailCollation(email);
         if(show.isPresent()) {
             String passwordResetLink = RandomUtil.generateToken(25);
             show.get().setPasswordResetLink(passwordResetLink);
