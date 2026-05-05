@@ -52,8 +52,8 @@ public class GraphQLMutationService {
         if (basicAuthCredentials != null) {
             String email = basicAuthCredentials[0];
             String password = basicAuthCredentials[1];
-            Optional<Show> show = this.showRepository.findByEmailOrShowSubdomain(email, showSubdomain);
-            if (show.isPresent()) {
+            if (this.showRepository.findByEmailCollation(email).isPresent()
+                    || this.showRepository.findByShowSubdomain(showSubdomain).isPresent()) {
                 throw new RuntimeException(StatusResponse.SHOW_EXISTS.name());
             }
             String showToken = this.validateShowToken(RandomUtil.generateToken(25));

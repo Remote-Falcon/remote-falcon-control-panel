@@ -17,7 +17,6 @@ public interface ShowRepository extends MongoRepository<Show, String> {
     Optional<Show> findByShowToken(String showToken);
     Optional<Show> findByShowSubdomain(String showSubdomain);
     Optional<Show> findByShowName(String showName);
-    Optional<Show> findByEmailOrShowSubdomain(String email, String showSubdomain);
 
     // Case-insensitive email lookup that uses the idx_email_ci index (collation strength=2).
     // Spring Data's derived findByEmailIgnoreCase uses $regex /i which can't use the index.
